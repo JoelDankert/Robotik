@@ -19,15 +19,24 @@ void startmotor(){
   digitalWrite(motorPin, HIGH);
 }
 
+void stopmotor(){
+  digitalWrite(motorPin, LOW);
+}
+
 void setup() {
   pinMode(trigPin, OUTPUT); 
   pinMode(echoPin, INPUT); 
+  pinMode(motorPin, OUTPUT); 
   Serial.begin(9600);
-  Serial.println("Ultrasonic Sensor HC-SR04 Test"); 
-  Serial.println("with Arduino UNO R3");
 }
 void loop() {
   int dist = returndist();
-
- 
+  Serial.println("current dist: "+String(dist)+"cm");
+  if (dist > 10){
+    startmotor();
+    Serial.println("KUPFER");
+  }
+  else{
+    stopmotor();
+  }
 }
