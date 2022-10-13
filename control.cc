@@ -3,43 +3,73 @@
 #define motorPinR1 4
 #define motorPinR2 5
 
-void setupmotors()
-{
-  pinMode(motorPinL1, OUTPUT);
-  pinMode(motorPinL2, OUTPUT);
-  pinMode(motorPinR1, OUTPUT);
-  pinMode(motorPinR2, OUTPUT);
+class MotorCtrl{
+  public:
+    void setupmotors()
+    {
+      pinMode(motorPinL1, OUTPUT);
+      pinMode(motorPinL2, OUTPUT);
+      pinMode(motorPinR1, OUTPUT);
+      pinMode(motorPinR2, OUTPUT);
+    }
+
+    void mR_FW(){
+      digitalWrite(motorPinL1, LOW);
+      digitalWrite(motorPinL2, HIGH);
+    }
+
+    void mL_FW(){
+      digitalWrite(motorPinR1, HIGH);
+      digitalWrite(motorPinR2, LOW);
+    }
+
+    void mR_BW(){
+      digitalWrite(motorPinL1, HIGH);
+      digitalWrite(motorPinL2, LOW);
+    }
+
+    void mL_BW(){
+      digitalWrite(motorPinR1, LOW);
+      digitalWrite(motorPinR2, HIGH);
+    }
+
+    void mL_OFF(){
+      digitalWrite(motorPinR1, LOW);
+      digitalWrite(motorPinR2, LOW);
+    }
+
+    void mR_OFF(){
+      digitalWrite(motorPinL1, LOW);
+      digitalWrite(motorPinL2, LOW);
+    }
 }
 
-void mR_FW(){
-  digitalWrite(motorPinL1, LOW);
-  digitalWrite(motorPinL2, HIGH);
+class ShortCtrl{
+  public:
+    void Forward(){
+      MotorCtrl.mL_FW();
+      MotorCtrl.mR_FW();
+    }
+    void Backward(){
+      MotorCtrl.mL_BW();
+    	MotorCtrl.mR_BW();
+    }
+    void LeftFull(){
+      MotorCtrl.mL_BW();
+      MotorCtrl.mR_FW();
+    }
+    void RightFull{
+       MotorCtrl.mL_FW();
+       MotorCtrl.mR_BW();
+    }
+    void Off{
+      MotorCtrl.mL_OFF();
+      MotorCtrl.mR_OFF();
+    }
+    
+
 }
 
-void mL_FW(){
-  digitalWrite(motorPinR1, HIGH);
-  digitalWrite(motorPinR2, LOW);
-}
-
-void mR_BW(){
-  digitalWrite(motorPinL1, HIGH);
-  digitalWrite(motorPinL2, LOW);
-}
-
-void mL_BW(){
-  digitalWrite(motorPinR1, LOW);
-  digitalWrite(motorPinR2, HIGH);
-}
-
-void mL_OFF(){
-  digitalWrite(motorPinR1, LOW);
-  digitalWrite(motorPinR2, LOW);
-}
-
-void mR_OFF(){
-  digitalWrite(motorPinL1, LOW);
-  digitalWrite(motorPinL2, LOW);
-}
 
 void setup() {
   Serial.begin(9600);
@@ -57,32 +87,32 @@ int dlay = 5000;
 
 void loop(){
   Serial.println("LOOP START");
-  mL_FW();
-  mR_FW();
+  MotorCtrl.mL_FW();
+  MotorCtrl.mR_FW();
   Serial.println("fw");
   delay(dlay);
-  mL_BW();
-  mR_BW();
+  MotorCtrl.mL_BW();
+  MotorCtrl.mR_BW();
   Serial.println("bw");
   delay(dlay);
-  mL_FW();
-  mR_BW();
+  MotorCtrl.mL_FW();
+  MotorCtrl.mR_BW();
   Serial.println("right");
   delay(dlay);
-  mL_BW();
-  mR_FW();
+  MotorCtrl.mL_BW();
+  MotorCtrl.mR_FW();
   Serial.println("left");
   delay(dlay);
-  mL_OFF();
-  mR_FW();
+  MotorCtrl.mL_OFF();
+  MotorCtrl.mR_FW();
   Serial.println("left off");
   delay(dlay);
-  mL_FW();
-  mR_OFF();
+  MotorCtrl.mL_FW();
+  MotorCtrl.mR_OFF();
   Serial.println("right off");
   delay(dlay);
-  mL_OFF();
-  mR_OFF();
+  MotorCtrl.mL_OFF();
+  MotorCtrl.mR_OFF();
   Serial.println("full off");
   delay(dlay);
   
