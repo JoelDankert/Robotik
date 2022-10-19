@@ -5,6 +5,7 @@
 #define motorSpeedL 9
 #define motorSpeedR 10
 
+
 class MotorCtrl{
   public:
     void setupmotors()
@@ -19,8 +20,8 @@ class MotorCtrl{
 
     void setspeed(float speed){
       
-      analogWrite(9, (200*speed)); //ENA pin
-      analogWrite(10, (200*speed)); //ENB pin 
+      analogWrite(9, (255*speed)); //ENA pin
+      analogWrite(10, (255*speed)); //ENB pin 
     }
 
     void mR_FW(){
@@ -70,6 +71,25 @@ class MotorCtrl{
     }
 };
 
+void speedfast(){
+  
+  MotorCtrl Motors;
+  for (int s = 0; s < 100; s += 1)
+  {
+    delay(100);
+    Motors.setspeed(float(s)/100);
+    Serial.println("speed now at: "+String(s));
+  }
+  for (int s = 100; s > 0; s -= 1)
+  {
+    delay(100);
+    Motors.setspeed(float(s)/100);
+    Serial.println("speed now at: "+String(s));
+  }
+
+}
+
+
 void setup() {
   
   MotorCtrl Motors;
@@ -84,15 +104,10 @@ void setup() {
   }
 }
 
-int dlay = 5000;
-
 void loop(){
   MotorCtrl Motors;
   Motors.FW();
-  delay(1000);
-  Motors.setspeed(0.1);
-  delay(1000);
-  Motors.setspeed(0.5);
-  delay(1000);
-  Motors.setspeed(1);
+  speedfast();
 }
+
+
