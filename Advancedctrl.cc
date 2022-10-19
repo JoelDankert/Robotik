@@ -81,11 +81,11 @@ class MotorCtrl{
       mL_BW();
       mR_BW();
     }
-    void Left(){
+    void LEFT(){
       mL_FW();
       mR_BW();
     }
-    void Right(){
+    void RIGHT(){
       mL_BW();
       mR_FW();
     }
@@ -95,6 +95,41 @@ class MotorCtrl{
     }
 };
 
+void goinrange(int des, int buff){
+  int tostay = 0;
+  while (1 == 1)
+  {
+    delay(10);
+    MotorCtrl Motors;
+    UltraSonic Sonic;
+    int desired = des;
+    int maxovershoot = buff;
+  
+    float dist = Sonic.returndist();
+    Serial.println(String(dist));
+    if (dist > desired + maxovershoot)
+    {
+      Motors.FW();
+      tostay = 0;
+    }
+    else if (dist < desired - maxovershoot)
+    {
+      Motors.BW();
+      tostay = 0;
+    }
+    else
+    {
+      Motors.STOP();
+      tostay += 1;
+    }
+    
+    if (tostay >= 50)
+    {
+      return;
+    }
+  }
+
+}
 
 void setup() {
   Serial.begin(9600);
@@ -112,27 +147,12 @@ void setup() {
   }
 }
 
-void loop(){
+void loop()
+{
   MotorCtrl Motors;
   UltraSonic Sonic;
-  int desired = 25;
-  int maxovershoot = 5;
-
-  float dist = Sonic.returndist();
-  Serial.println(String(dist));
-  if (dist > desired + maxovershoot)
-  {
-    Motors.FW();
-  }
-  else if (dist < desired - maxovershoot)
-  {
-    Motors.BW();
-  }
-  else
-  {
-    Motors.STOP();
-  }
-    
+  goinrange(25,5);
+  Motors.LEFT();
+  delay(2500);
 }
-
 
