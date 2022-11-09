@@ -39,7 +39,6 @@ class MotorCtrl{
     }
 
     void setspeed(float speed){
-      
       analogWrite(9, (255*speed)); //ENA pin
       analogWrite(10, (255*speed)); //ENB pin 
     }
@@ -135,7 +134,7 @@ void setup() {
   Serial.begin(9600);
   MotorCtrl Motors;
   Motors.setupmotors();
-  Motors.setspeed(20);
+  Motors.setspeed(0.2);
   UltraSonic Sonic;
   Sonic.setupsensor();
   
