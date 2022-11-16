@@ -49,13 +49,13 @@ class MotorCtrl{
     }
 
     void mL_BW(){
-      digitalWrite(motorPinR1, HIGH);
-      digitalWrite(motorPinR2, LOW);
+      digitalWrite(motorPinR1, LOW);
+      digitalWrite(motorPinR2, HIGH);
     }
 
     void mR_FW(){
-      digitalWrite(motorPinL1, HIGH);
-      digitalWrite(motorPinL2, LOW);
+      digitalWrite(motorPinL1, LOW);
+      digitalWrite(motorPinL2, HIGH);
     }
 
     void mL_FW(){
@@ -134,7 +134,7 @@ void setup() {
   Serial.begin(9600);
   MotorCtrl Motors;
   Motors.setupmotors();
-  Motors.setspeed(0.2);
+  Motors.setspeed(1);
   UltraSonic Sonic;
   Sonic.setupsensor();
   
