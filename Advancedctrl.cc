@@ -43,24 +43,24 @@ class MotorCtrl{
       analogWrite(10, (255*speed)); //ENB pin 
     }
 
-    void mR_BW(){
-      digitalWrite(motorPinL1, LOW);
-      digitalWrite(motorPinL2, HIGH);
-    }
-
     void mL_BW(){
-      digitalWrite(motorPinR1, LOW);
-      digitalWrite(motorPinR2, HIGH);
-    }
-
-    void mR_FW(){
-      digitalWrite(motorPinL1, LOW);
-      digitalWrite(motorPinL2, HIGH);
+      digitalWrite(motorPinL1, HIGH);
+      digitalWrite(motorPinR2, LOW);
     }
 
     void mL_FW(){
+      digitalWrite(motorPinL1, LOW);
+      digitalWrite(motorPinL2, HIGH);
+    }
+
+    void mR_FW(){
       digitalWrite(motorPinR1, LOW);
       digitalWrite(motorPinR2, HIGH);
+    }
+    
+    void mR_BW(){
+      digitalWrite(motorPinR1, HIGH);
+      digitalWrite(motorPinR2, LOW);
     }
 
     void mL_OFF(){
@@ -153,5 +153,5 @@ void loop()
   UltraSonic Sonic;
   goinrange(25,5);
   Motors.LEFT();
-  delay(2500);
+  delay(1000);
 }
