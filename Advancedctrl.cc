@@ -140,18 +140,13 @@ void setup() {
   
   Serial.println("setup complete!");
 
-  for (float i = 10; i>0;i--){
-    Serial.println("KUPFER");
-    delay(100);
-    Serial.println("starting in "+String(i/10)+"sec");
-  }
 }
 
 void loop()
 {
   MotorCtrl Motors;
   UltraSonic Sonic;
-  goinrange(25,5);
+  goinrange(25,3);
   Motors.LEFT();
   delay(1000);
 }
