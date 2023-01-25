@@ -68,12 +68,12 @@ class MotorCtrl{
       pinMode(motorPinR1, OUTPUT);
       pinMode(motorPinR2, OUTPUT);
       pinMode(motorSpeedL,OUTPUT);
-      pinMode(motorSpeedL,OUTPUT);
+      pinMode(motorSpeedR,OUTPUT);
     }
 
     void setspeed(float speed){
-      analogWrite(9, (255*speed)); //ENA pin
-      analogWrite(10, (255*speed)); //ENB pin 
+      analogWrite(motorSpeedL, (255*speed));
+      analogWrite(motorSpeedR, (255*speed));
     }
 
     void mL_BW(){
@@ -114,12 +114,12 @@ class MotorCtrl{
       mR_BW();
     }
     void LEFT(){
-      mL_FW();
-      mR_BW();
-    }
-    void RIGHT(){
       mL_BW();
       mR_FW();
+    }
+    void RIGHT(){
+      mL_FW();
+      mR_BW();
     }
     void STOP(){
       mL_OFF();
@@ -161,26 +161,61 @@ void step(){
   float Leftval = Sonic.returndistLeft();
   float Frontval = Sonic.returndistFront();
   float Rightval = Sonic.returndistRight();
-  int distanceopen = 5;
+  delay (200);
+  Leftval = (Sonic.returndistLeft() + Leftval)/2;
+  Frontval = (Sonic.returndistFront()+ Frontval)/2;
+  Rightval = (Sonic.returndistRight()+ Rightval)/2;
+  Serial.println(Leftval);
+  Serial.println(Frontval);
+  Serial.println(Rightval);
+  Serial.println("");
+  int distanceopen = 15;
   int next = getnextstep(Leftval > distanceopen,Frontval > distanceopen,Rightval > distanceopen);
-  int onelen = 0.2;
-  if (next = 0){
-    Motors.LEFT();
-    delay(onelen*2);
-    Motors.STOP();
-  }
-  else if (next = 1){
-    Motors.LEFT();
+  Serial.println(next);
+  int onelen = 600;
+  int turnlen = 450;
+  int betw = 100;
+
+  if (Frontval < distanceopen){
+    Motors.FW();
     delay(onelen);
     Motors.STOP();
+    delay(betw);
+    Motors.BW();
+    delay(onelen/3);
+    Motors.STOP();
+    delay(betw);
   }
-  else if (next = 2){
+  
+  if (next == 0){
+    Motors.LEFT();
+    delay(turnlen*2);
+    Motors.STOP();
+    delay(betw);
     Motors.FW();
     delay(onelen);
     Motors.STOP();
   }
-  else if (next = 3){
+  else if (next == 1){
+    Motors.LEFT();
+    delay(turnlen);
+    Motors.STOP();
+    delay(betw);
+    Motors.FW();
+    delay(onelen);
+    Motors.STOP();
+  }
+  else if (next == 2){
+    Motors.FW();
+    delay(onelen);
+    Motors.STOP();
+  }
+  else if (next == 3){
     Motors.RIGHT();
+    delay(turnlen);
+    Motors.STOP();
+    delay(betw);
+    Motors.FW();
     delay(onelen);
     Motors.STOP();
   }
@@ -191,5 +226,7 @@ void loop()
   MotorCtrl Motors;
   UltraSonic Sonic;
   step();
-  delay(5000);
+  //Motors.LEFT();
+  
+  delay(200);
 }
