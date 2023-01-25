@@ -1,9 +1,9 @@
-#define motorPinL1 2
-#define motorPinL2 3
-#define motorPinR1 4
-#define motorPinR2 5
-#define motorSpeedL 9
-#define motorSpeedR 10
+#define motorPinL1 22
+#define motorPinL2 24
+#define motorPinR1 26
+#define motorPinR2 28
+#define motorSpeedL 8
+#define motorSpeedR 9
 #define echoPinFront 3
 #define trigPinFront 2
 #define echoPinLeft 5
