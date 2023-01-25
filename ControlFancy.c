@@ -225,6 +225,6 @@ void loop()
 {
   MotorCtrl Motors;
   UltraSonic Sonic;
-  goinrange(25,3);
-  delay(1000);
+  step()
+  delay(5000);
 }
