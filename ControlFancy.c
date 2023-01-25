@@ -4,12 +4,12 @@
 #define motorPinR2 5
 #define motorSpeedL 9
 #define motorSpeedR 10
-#define echoPinFront 13
-#define trigPinFront 12
-#define echoPinLeft 13
-#define trigPinLeft 12
-#define echoPinRight 13
-#define trigPinRight 12
+#define echoPinFront 3
+#define trigPinFront 2
+#define echoPinLeft 5
+#define trigPinLeft 4
+#define echoPinRight 7
+#define trigPinRight 6
 
 class UltraSonic{
   public:
@@ -198,7 +198,7 @@ void step(){
   float Rightval = Sonic.returndistRight
   int distanceopen = 5
   int next = getnextstep(Leftval > distanceopen,Frontval > distanceopen,Rightval > distanceopen)
-  int onelen = 1
+  int onelen = 0.2
   if (next = 0){
     Motors.LEFT()
     delay(onelen*2)
