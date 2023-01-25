@@ -4,25 +4,58 @@
 #define motorPinR2 5
 #define motorSpeedL 9
 #define motorSpeedR 10
-#define echoPin 13
-#define trigPin 12
+#define echoPinFront 13
+#define trigPinFront 12
+#define echoPinLeft 13
+#define trigPinLeft 12
+#define echoPinRight 13
+#define trigPinRight 12
 
 class UltraSonic{
   public:
-    int returndist(){
+    int returndistFront(){
       long duration;
       int distance; 
-      digitalWrite(trigPin, LOW);
+      digitalWrite(trigPinFront, LOW);
       delayMicroseconds(2);
-      digitalWrite(trigPin, HIGH);
-      digitalWrite(trigPin, LOW);
-      duration = pulseIn(echoPin, HIGH);
+      digitalWrite(trigPinFront, HIGH);
+      digitalWrite(trigPinFront, LOW);
+      duration = pulseIn(echoPinFront, HIGH);
       distance = duration * 0.034 / 2;
       return distance;
     }
+  
+    int returndistLeft(){
+      long duration;
+      int distance; 
+      digitalWrite(trigPinLeft, LOW);
+      delayMicroseconds(2);
+      digitalWrite(trigPinLeft, HIGH);
+      digitalWrite(trigPinLeft, LOW);
+      duration = pulseIn(echoPinLeft, HIGH);
+      distance = duration * 0.034 / 2;
+      return distance;
+    }
+  
+    int returndistRight(){
+      long duration;
+      int distance; 
+      digitalWrite(trigPinRight, LOW);
+      delayMicroseconds(2);
+      digitalWrite(trigPinRight, HIGH);
+      digitalWrite(trigPinRight, LOW);
+      duration = pulseIn(echoPinRight, HIGH);
+      distance = duration * 0.034 / 2;
+      return distance;
+    }
+  
     void setupsensor(){  
-      pinMode(trigPin, OUTPUT); 
-      pinMode(echoPin, INPUT); 
+      pinMode(trigPinFront, OUTPUT); 
+      pinMode(echoPinFront, INPUT); 
+      pinMode(trigPinLeft, OUTPUT); 
+      pinMode(echoPinLeft, INPUT);
+      pinMode(trigPinRight, OUTPUT); 
+      pinMode(echoPinRight, INPUT); 
     }
 };
 
