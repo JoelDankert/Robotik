@@ -166,16 +166,14 @@ void step(){
 
   MotorCtrl Motors;
   UltraSonic Sonic;
-  Motors.STOP();
+  //Motors.STOP();
+  Serial.println("sonic");
   delay (50);
   float Leftval = Sonic.returndistLeft();
   float Frontval = Sonic.returndistFront();
   float Rightval = Sonic.returndistRight();
   delay (50);
-  Leftval = (Sonic.returndistLeft() + Leftval) /2;
-  Frontval = (Sonic.returndistFront() + Frontval) /2;
-  Rightval = (Sonic.returndistRight() + Rightval) /2;
-  delay (50);
+  Serial.println("sonicend");
   
   Serial.println(Leftval);
   Serial.println(Frontval);
@@ -184,12 +182,12 @@ void step(){
   int distanceopen = 15;
   int next = getnextstep(Leftval > distanceopen,Frontval > distanceopen,Rightval > distanceopen);
   Serial.println(next);
-  int onelen = 400;
-  int burstlen = 750;
-  int caliback = 200;
-  int turnlen = 500;
-  int betw = 150;
-  int turnback = 200;
+  int onelen = 300;
+  int burstlen = 500;                                            
+  int caliback = 75;
+  int turnlen = 400;
+  int betw = 200;
+  int turnback = 50;
 
   if (Frontval < distanceopen){
     Motors.FW();
@@ -248,11 +246,10 @@ void step(){
 
 }
 
-void loop()
-{
+void loop(){
   MotorCtrl Motors;
   UltraSonic Sonic;
   step();
   //Motors.FW();
-  delay(100);
+  delay(10);
 }
