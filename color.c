@@ -30,10 +30,12 @@ class Color{
       uint16_t r, g, b, c, colorTemp, lux;
     
       tcs.getRawData(&r, &g, &b, &c);
-      colorTemp = tcs.calculateColorTemperature_dn40(r, g, b, c);
-      lux = tcs.calculateLux(r, g, b);
-      //int color[3] = {r,g,b};
-      return r;
+      
+      int color[3];
+      color[0] = r;
+      color[1] = g;
+      color[2] = b;
+      return color;
     }
 };
 
@@ -278,15 +280,14 @@ void loop(){
   MotorCtrl Motors;
   UltraSonic Sonic;
   Color ColorSensor;
-  //int c[3] = {ColorSensor.ReturnColor()};
+  int col = ColorSensor.ReturnColor();
 
-  //Serial.println(c[0]);
+  Serial.println(col[0]);
   
-  //Serial.println(c[1]);
+  Serial.println(col[1]);
   
-  //Serial.println(c[2]);
+  Serial.println(col[2]);
 
-  Serial.println(ColorSensor.ReturnColor());
   
   delay(10);
 }
