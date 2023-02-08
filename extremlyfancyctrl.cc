@@ -25,9 +25,10 @@ class Color{
     void setupcolor(){
       tcs.begin();
     }
-    struct ReturnColor(){
+    int * ReturnColor(){
       tcs.getRawData(&r,&g,&b);
-      return r,g,b;
+      color[3] = [r,g,b];
+      return color;
     }
     
 
