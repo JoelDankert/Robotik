@@ -2,50 +2,291 @@
 #include <Adafruit_I2CDevice.h>
 #include <Adafruit_I2CRegister.h>
 #include <Adafruit_SPIDevice.h>
-
 #include <Wire.h>
 #include "Adafruit_TCS34725.h"
 
-/* Example code for the Adafruit TCS34725 breakout library */
+#define motorPinL1 22
+#define motorPinL2 24
+#define motorPinR1 26
+#define motorPinR2 28
+#define motorSpeedL 8
+#define motorSpeedR 9
+#define echoPinFront 3
+#define trigPinFront 2
+#define echoPinLeft 5
+#define trigPinLeft 4
+#define echoPinRight 7
+#define trigPinRight 6
 
-/* Connect SCL    to analog 5
-   Connect SDA    to analog 4
-   Connect VDD    to 3.3V DC
-   Connect GROUND to common ground */
-
-/* Initialise with default values (int time = 2.4ms, gain = 1x) */
 Adafruit_TCS34725 tcs = Adafruit_TCS34725();
 
-/* Initialise with specific int time and gain values */
-//Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
+class Color{
+  public:
+    void setupcolor(){
+      Serial.println(tcs.begin());
+    }
+    int * ReturnColor(){
 
-void setup(void) {
+      uint16_t r, g, b, c, colorTemp, lux;
+    
+      tcs.getRawData(&r, &g, &b, &c);
+      colorTemp = tcs.calculateColorTemperature_dn40(r, g, b, c);
+      lux = tcs.calculateLux(r, g, b);
+      //int color[3] = {r,g,b};
+      return r;
+    }
+};
+
+class UltraSonic{
+  public:
+    int returndistFront(){
+      long duration;
+      int distance; 
+      digitalWrite(trigPinFront, LOW);
+      delayMicroseconds(2);
+      digitalWrite(trigPinFront, HIGH);
+      digitalWrite(trigPinFront, LOW);
+      duration = pulseIn(echoPinFront, HIGH);
+      distance = duration * 0.034 / 2;
+      return distance;
+    }
+  
+    int returndistLeft(){
+      long duration;
+      int distance; 
+      digitalWrite(trigPinLeft, LOW);
+      delayMicroseconds(2);
+      digitalWrite(trigPinLeft, HIGH);
+      digitalWrite(trigPinLeft, LOW);
+      duration = pulseIn(echoPinLeft, HIGH);
+      distance = duration * 0.034 / 2;
+      return distance;
+    }
+  
+    int returndistRight(){
+      long duration;
+      int distance; 
+      digitalWrite(trigPinRight, LOW);
+      delayMicroseconds(2);
+      digitalWrite(trigPinRight, HIGH);
+      digitalWrite(trigPinRight, LOW);
+      duration = pulseIn(echoPinRight, HIGH);
+      distance = duration * 0.034 / 2;
+      return distance;
+    }
+  
+    void setupsensor(){  
+      pinMode(trigPinFront, OUTPUT); 
+      pinMode(echoPinFront, INPUT); 
+      pinMode(trigPinLeft, OUTPUT); 
+      pinMode(echoPinLeft, INPUT);
+      pinMode(trigPinRight, OUTPUT); 
+      pinMode(echoPinRight, INPUT); 
+    }
+};
+
+class MotorCtrl{
+  public:
+    void setupmotors()
+    {
+      pinMode(motorPinL1, OUTPUT);
+      pinMode(motorPinL2, OUTPUT);
+      pinMode(motorPinR1, OUTPUT);
+      pinMode(motorPinR2, OUTPUT);
+      pinMode(motorSpeedL,OUTPUT);
+      pinMode(motorSpeedR,OUTPUT);
+    }
+
+    void setspeed(float speed){
+      mL_SP(speed);
+      mR_SP(speed);
+    }
+    void mL_SP(float speed){
+      analogWrite(motorSpeedL, (255*speed));
+    }
+    
+    void mR_SP(float speed){
+      analogWrite(motorSpeedR, (255*speed));
+    }
+
+    void mL_BW(){
+      digitalWrite(motorPinL1, HIGH);
+      digitalWrite(motorPinL2, LOW);
+    }
+
+    void mL_FW(){
+      digitalWrite(motorPinL1, LOW);
+      digitalWrite(motorPinL2, HIGH);
+    }
+
+    void mR_FW(){
+      digitalWrite(motorPinR1, LOW);
+      digitalWrite(motorPinR2, HIGH);
+    }
+    
+    void mR_BW(){
+      digitalWrite(motorPinR1, HIGH);
+      digitalWrite(motorPinR2, LOW);
+    }
+
+    void mL_OFF(){
+      digitalWrite(motorPinR1, LOW);
+      digitalWrite(motorPinR2, LOW);
+    }
+
+    void mR_OFF(){
+      digitalWrite(motorPinL1, LOW);
+      digitalWrite(motorPinL2, LOW);
+    }
+    void FW(){
+      mL_FW();
+      mR_FW();
+    }
+    void BW(){
+      mL_BW();
+      mR_BW();
+    }
+    void LEFT(){
+      mL_BW();
+      mR_FW();
+    }
+    void RIGHT(){
+      mL_FW();
+      mR_BW();
+    }
+    void STOP(){
+      mL_OFF();
+      mR_OFF();
+    }
+};
+
+
+void setup() {
   Serial.begin(9600);
+  MotorCtrl Motors;
+  Motors.setupmotors();
+  Motors.setspeed(0.5);
+  UltraSonic Sonic;
+  Sonic.setupsensor();
+  Color ColorSensor;
+  ColorSensor.setupcolor();
+  
+  Serial.println("setup complete!");
 
-  if (tcs.begin()) {
-    Serial.println("Found sensor");
-  } else {
-    Serial.println("No TCS34725 found ... check your connections");
-    while (1);
-  }
-
-  // Now we're ready to get readings!
 }
 
-void loop(void) {
-  uint16_t r, g, b, c, colorTemp, lux;
 
-  tcs.getRawData(&r, &g, &b, &c);
-  // colorTemp = tcs.calculateColorTemperature(r, g, b);
-  colorTemp = tcs.calculateColorTemperature_dn40(r, g, b, c);
-  lux = tcs.calculateLux(r, g, b);
+int getnextstep(bool left,bool front,bool right){
+  if (left){
+    return 1;
+  }
+  if (front){
+    return 2;
+  }
+  if (right)
+  {
+    return 3;
+  }
+  return 0;
+}
 
-  Serial.print("Color Temp: "); Serial.print(colorTemp, DEC); Serial.print(" K - ");
-  Serial.print("Lux: "); Serial.print(lux, DEC); Serial.print(" - ");
-  Serial.print("R: "); Serial.print(r, DEC); Serial.print(" ");
-  Serial.print("G: "); Serial.print(g, DEC); Serial.print(" ");
-  Serial.print("B: "); Serial.print(b, DEC); Serial.print(" ");
-  Serial.print("C: "); Serial.print(c, DEC); Serial.print(" ");
-  Serial.println(" ");
-delay(1000);
+void step(){
+
+  MotorCtrl Motors;
+  UltraSonic Sonic;
+  //Motors.STOP();
+  Serial.println("sonic");
+  delay (50);
+  float Leftval = Sonic.returndistLeft();
+  float Frontval = Sonic.returndistFront();
+  float Rightval = Sonic.returndistRight();
+  delay (50);
+  Serial.println("sonicend");
+  
+  Serial.println(Leftval);
+  Serial.println(Frontval);
+  Serial.println(Rightval);
+  Serial.println("");
+  int distanceopen = 15;
+  int next = getnextstep(Leftval > distanceopen,Frontval > distanceopen,Rightval > distanceopen);
+  Serial.println(next);
+  int onelen = 300;
+  int burstlen = 500;                                            
+  int caliback = 75;
+  int turnlen = 400;
+  int betw = 200;
+  int turnback = 50;
+
+  if (Frontval < distanceopen){
+    Motors.FW();
+    delay(onelen);
+    Motors.STOP();
+    delay(betw);
+    Motors.BW();
+    delay(caliback);
+    Motors.STOP();
+    delay(betw);
+  }
+  
+
+  if (next == 2){
+    Motors.FW();
+    delay(onelen);
+  }
+  
+
+
+  if (next == 1 || next == 3){
+    Motors.BW();
+    delay(turnback);
+    Motors.STOP();
+    delay(betw);
+  }
+  if (next == 1){
+    Motors.LEFT();
+    delay(turnlen);
+    Motors.STOP();
+    delay(betw);
+    Motors.FW();
+    delay(burstlen);
+  }
+  if (next == 3){
+    Motors.RIGHT();
+    delay(turnlen);
+    Motors.STOP();
+    delay(betw);
+    Motors.FW();
+    delay(burstlen);
+  }
+
+
+
+
+
+  if (next == 0){
+    Motors.LEFT();
+    delay(turnlen*2);
+    Motors.STOP();
+    delay(betw);
+    Motors.FW();
+    delay(burstlen);
+  }
+
+}
+
+void loop(){
+  MotorCtrl Motors;
+  UltraSonic Sonic;
+  Color ColorSensor;
+  //int c[3] = {ColorSensor.ReturnColor()};
+
+  //Serial.println(c[0]);
+  
+  //Serial.println(c[1]);
+  
+  //Serial.println(c[2]);
+
+  Serial.println(ColorSensor.ReturnColor());
+  
+  delay(10);
 }
