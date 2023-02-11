@@ -171,7 +171,12 @@ class Color{
     uint16_t r, g, b, c, colorTemp, lux;
     
     void setupcolor(){
-      tcs.begin();
+      if(tcs.begin()){
+        Serial.println("COLOR INIT");
+      }
+      else{
+         Serial.println("ERROR COLORS");
+      }
     }
     void ReturnColor(){
       
@@ -300,13 +305,13 @@ void step(){
 
   MotorCtrl Motors;
   UltraSonic Sonic;
-  //Motors.STOP();
+  Motors.STOP();
   Serial.println("sonic...");
-  delay (50);
+  delay (betw);
   float Leftval = Sonic.returndistLeft();
   float Frontval = Sonic.returndistFront();
   float Rightval = Sonic.returndistRight();
-  delay (50);
+  delay (betw);
   Serial.println("...sonicend");
   
   Serial.println("sensors LFR:");
@@ -335,7 +340,7 @@ void step(){
 
   if (next == 2){
     Motors.FW();
-    delaywithcolorcheck(onelen,50);
+    delaywithcolorcheck(onelen,100);
   }
   
 
@@ -352,7 +357,7 @@ void step(){
     Motors.STOP();
     delay(betw);
     Motors.FW();
-    delaywithcolorcheck(burstlen,50);
+    delaywithcolorcheck(burstlen,100);
   }
   if (next == 3){
     Motors.RIGHT();
@@ -381,8 +386,8 @@ void step(){
 void loop(){
   MotorCtrl Motors;
   UltraSonic Sonic;
-  //checkred();
-  step();
+  checkred();
+  //step();
   //Motors.FW();
   delay(3000);
 }
