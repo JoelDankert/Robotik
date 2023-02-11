@@ -278,12 +278,14 @@ bool checkblack(){
   if ((colr <= colmaxval) && (colg <= colmaxval) && (colb <= colmaxval)){
     
     Serial.println("BLACKKKK");
-    Motors.LEFT();
-    delay(turnlen);
+    Motors.BW();
+    delay(onelen);
     Motors.STOP();
     delay(betw);
-    Motors.FW();
-    delay(burstlen);
+    Motors.RIGHT();
+    delay(turnlen*2);
+    Motors.STOP();
+    delay(betw);
     return true;
   }
   return false;
