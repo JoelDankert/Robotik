@@ -21,15 +21,15 @@
 #define dropoffpin 30
 
 
-int onelen = 300;
-int burstlen = 500;
-int caliback = 75;
-int turnlen = 400;
-int betw = 200;
+int onelen = 200;
+int burstlen = 400;
+int caliback = 200;
+int turnlen = 500;
+int betw = 250;
 int turnfwd = 100;
-int colmaxval = 2;
+int colmaxval = 0;
 int colminred = 1;
-int distanceopen = 15;
+int distanceopen = 20;
   
 Adafruit_TCS34725 tcs = Adafruit_TCS34725();
 
@@ -44,6 +44,10 @@ class UltraSonic{
       digitalWrite(trigPinFront, HIGH);
       digitalWrite(trigPinFront, LOW);
       duration = pulseIn(echoPinFront, HIGH);
+      if (duration == 0)
+      {
+        return 1000;
+      }
       distance = duration * 0.034 / 2;
       return distance;
     }
@@ -56,6 +60,10 @@ class UltraSonic{
       digitalWrite(trigPinLeft, HIGH);
       digitalWrite(trigPinLeft, LOW);
       duration = pulseIn(echoPinLeft, HIGH);
+      if (duration == 0)
+      {
+        return 1000;
+      }
       distance = duration * 0.034 / 2;
       return distance;
     }
@@ -68,6 +76,10 @@ class UltraSonic{
       digitalWrite(trigPinRight, HIGH);
       digitalWrite(trigPinRight, LOW);
       duration = pulseIn(echoPinRight, HIGH);
+      if (duration == 0)
+      {
+        return 1000;
+      }
       distance = duration * 0.034 / 2;
       return distance;
     }
@@ -261,6 +273,7 @@ bool checkblack(){
   Serial.println(colb);
   if ((colr <= colmaxval) && (colg <= colmaxval) && (colb <= colmaxval)){
     
+    Serial.println("BLACKKKK");
     Motors.LEFT();
     delay(turnlen);
     Motors.STOP();
@@ -274,33 +287,20 @@ bool checkblack(){
 
 
 int getnextstep(bool left,bool front,bool right){
-  if (left){
-    return 1;
-  }
-  if (front){
-    return 2;
-  }
   if (right)
   {
     return 3;
   }
+  if (front){
+    return 2;
+  }
+  if (left){
+    return 1;
+  }
+  
+  
   return 0;
 }
-
-void delaywithcolorcheck(int duration, int interval){
-  int i = 0;
-  while (i < duration){
-    delay(interval);
-    i+=interval;
-    if(checkred());{
-      break;
-    }
-    if(checkblack()){
-      break;
-    }
-  }
-}
-
 void step(){
 
   MotorCtrl Motors;
@@ -309,7 +309,9 @@ void step(){
   Serial.println("sonic...");
   delay (betw);
   float Leftval = Sonic.returndistLeft();
+  delay (betw);
   float Frontval = Sonic.returndistFront();
+  delay (betw);
   float Rightval = Sonic.returndistRight();
   delay (betw);
   Serial.println("...sonicend");
@@ -325,10 +327,11 @@ void step(){
   Serial.println("checking for colors...");
   checkblack();
   checkred();
+  delay(betw);
 
   if (Frontval < distanceopen){
     Motors.FW();
-    delay(onelen);
+    delay(burstlen);
     Motors.STOP();
     delay(betw);
     Motors.BW();
@@ -340,7 +343,7 @@ void step(){
 
   if (next == 2){
     Motors.FW();
-    delaywithcolorcheck(onelen,100);
+    delay(onelen);
   }
   
 
@@ -357,9 +360,9 @@ void step(){
     Motors.STOP();
     delay(betw);
     Motors.FW();
-    delaywithcolorcheck(burstlen,100);
+    delay(burstlen);
   }
-  if (next == 3){
+  if (next == 3 || next == 0){
     Motors.RIGHT();
     delay(turnlen);
     Motors.STOP();
@@ -372,22 +375,22 @@ void step(){
 
 
 
-  if (next == 0){
-    Motors.LEFT();
-    delay(turnlen*2);
-    Motors.STOP();
-    delay(betw);
-    Motors.FW();
-    delay(burstlen);
-  }
+  //if (next == 0){
+  //  Motors.RIGHT();
+ //   delay(turnlen*2);
+  //  Motors.STOP();
+  //  delay(betw);
+    //Motors.FW();
+    //delay(burstlen);
+  //}
 
 }
 
 void loop(){
   MotorCtrl Motors;
   UltraSonic Sonic;
-  checkred();
-  //step();
-  //Motors.FW();
-  delay(3000);
+  //checkred();
+  step();
+ //Motors.mR_FW();
+  delay(100);
 }
