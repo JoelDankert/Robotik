@@ -20,8 +20,8 @@
 #define ledpin 11
 
 
-int onelen = 300;
-int burstlen = 500;                                            
+int onelen = 200;
+int burstlen = 500;
 int caliback = 75;
 int turnlen = 400;
 int betw = 200;
