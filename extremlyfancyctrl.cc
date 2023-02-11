@@ -21,16 +21,16 @@
 #define dropoffpin 30
 
 
-int onelen = 250;
+int onelen = 300;
 int burstlen = 500;
-int caliback = 200;
+int caliback = 150;
 int turnlen = 400;
-int turnfwd = 100;
+int turnfwd = 200;
 
-int betw = 250;
+int betw = 200;
 
 int colmaxval = 100;
-int colminred = 50;
+int colminred = 70;
 int distanceopen = 20;
   
 
@@ -361,7 +361,7 @@ void step(){
 
 
   if (next == 1 || next == 3){
-    Motors.FW();
+    Motors.BW();
     delay(turnfwd);
     Motors.STOP();
     checkred();
