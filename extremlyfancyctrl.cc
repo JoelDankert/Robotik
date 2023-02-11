@@ -26,6 +26,7 @@ int burstlen = 600;
 int caliback = 150;
 int turnlen = 450;
 int turnfwd = 100;
+int checklen = 100;
 
 int betw = 200;
 
@@ -374,7 +375,13 @@ void step(){
     checkred();
     delay(betw);
     Motors.FW();
+    delay(checklen);
+    Motors.STOP();
+    checkblack();
+    checkred();
+    Motors.FW();
     delay(burstlen);
+    Motors.STOP();
   }
   if (next == 3){
     Motors.RIGHT();
@@ -383,7 +390,13 @@ void step(){
     checkred();
     delay(betw);
     Motors.FW();
+    delay(checklen);
+    Motors.STOP();
+    checkblack();
+    checkred();
+    Motors.FW();
     delay(burstlen);
+    Motors.STOP();
   }
   if(next == 0){
     Motors.RIGHT();
