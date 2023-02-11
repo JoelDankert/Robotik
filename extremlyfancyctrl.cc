@@ -364,12 +364,14 @@ void step(){
     Motors.FW();
     delay(turnfwd);
     Motors.STOP();
+    checkred();
     delay(betw);
   }
   if (next == 1){
     Motors.LEFT();
     delay(turnlen);
     Motors.STOP();
+    checkred();
     delay(betw);
     Motors.FW();
     delay(burstlen);
@@ -378,6 +380,7 @@ void step(){
     Motors.RIGHT();
     delay(turnlen);
     Motors.STOP();
+    checkred();
     delay(betw);
     Motors.FW();
     delay(burstlen);
