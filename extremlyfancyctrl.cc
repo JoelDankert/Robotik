@@ -21,14 +21,14 @@
 #define dropoffpin 30
 
 
-int onelen = 200;
-int burstlen = 400;
+int onelen = 500;
+int burstlen = 1000;
 int caliback = 200;
 int turnlen = 500;
 int betw = 250;
-int turnfwd = 100;
-int colmaxval = 0;
-int colminred = 1;
+int turnbck = 200;
+int colmaxval = -1;
+int colminred = 2;
 int distanceopen = 20;
   
 Adafruit_TCS34725 tcs = Adafruit_TCS34725();
@@ -229,7 +229,7 @@ void setup() {
   pinMode(ledpin, OUTPUT); 
   MotorCtrl Motors;
   Motors.setupmotors();
-  Motors.setspeed(0.5);
+  Motors.setspeed(0.3);
   UltraSonic Sonic;
   Sonic.setupsensor();
   Color ColorSensor;
@@ -338,6 +338,15 @@ void step(){
     delay(caliback);
     Motors.STOP();
     delay(betw);
+
+    float Leftval = Sonic.returndistLeft();
+    delay (betw);
+    float Frontval = Sonic.returndistFront();
+    delay (betw);
+    float Rightval = Sonic.returndistRight();
+    delay (betw);
+    
+    int next = getnextstep(Leftval > distanceopen,Frontval > distanceopen,Rightval > distanceopen);
   }
   
 
@@ -349,8 +358,8 @@ void step(){
 
 
   if (next == 1 || next == 3){
-    Motors.FW();
-    delay(turnfwd);
+    Motors.BW();
+    delay(turnbck);
     Motors.STOP();
     delay(betw);
   }
@@ -362,13 +371,19 @@ void step(){
     Motors.FW();
     delay(burstlen);
   }
-  if (next == 3 || next == 0){
+  if (next == 3){
     Motors.RIGHT();
     delay(turnlen);
     Motors.STOP();
     delay(betw);
     Motors.FW();
     delay(burstlen);
+  }
+  if(next == 0){
+    Motors.RIGHT();
+    delay(turnlen);
+    Motors.STOP();
+    delay(betw);
   }
 
 
@@ -391,6 +406,7 @@ void loop(){
   UltraSonic Sonic;
   //checkred();
   step();
- //Motors.mR_FW();
+  //Motors.mR_BW();
+  //Motors.mL_BW();
   delay(100);
 }
