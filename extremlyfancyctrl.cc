@@ -21,17 +21,20 @@
 #define dropoffpin 30
 
 
-int onelen = 500;
-int burstlen = 1000;
+int onelen = 250;
+int burstlen = 500;
 int caliback = 200;
-int turnlen = 500;
+int turnlen = 400;
+int turnfwd = 100;
+
 int betw = 250;
-int turnbck = 200;
-int colmaxval = -1;
-int colminred = 2;
+
+int colmaxval = 100;
+int colminred = 50;
 int distanceopen = 20;
   
-Adafruit_TCS34725 tcs = Adafruit_TCS34725();
+
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
 
 
 class UltraSonic{
@@ -358,8 +361,8 @@ void step(){
 
 
   if (next == 1 || next == 3){
-    Motors.BW();
-    delay(turnbck);
+    Motors.FW();
+    delay(turnfwd);
     Motors.STOP();
     delay(betw);
   }
