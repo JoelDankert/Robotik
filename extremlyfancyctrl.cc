@@ -229,7 +229,7 @@ void setup() {
   pinMode(ledpin, OUTPUT); 
   MotorCtrl Motors;
   Motors.setupmotors();
-  Motors.setspeed(0.3);
+  Motors.setspeed(0.4);
   UltraSonic Sonic;
   Sonic.setupsensor();
   Color ColorSensor;
