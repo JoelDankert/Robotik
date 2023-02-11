@@ -19,42 +19,19 @@
 #define trigPinRight 6
 #define ledpin 11
 
-int rcol= 0;
-int gcol= 0;
-int bcol = 0;
 
+int onelen = 300;
+int burstlen = 500;                                            
+int caliback = 75;
+int turnlen = 400;
+int betw = 200;
+int turnback = 50;
+int colmaxval = 2;
+int colminred = 1;
+int distanceopen = 15;
+  
 Adafruit_TCS34725 tcs = Adafruit_TCS34725();
 
-
-void ledsend(){
-  digitalWrite(ledpin, HIGH);
-  delay(5000);
-  digitalWrite(ledpin, LOW);
-  
-}
-
-class Color{
-  public:
-  
-    int r = 0;
-    int g = 0;
-    int b = 0;
-    void setupcolor(){
-      tcs.begin();
-    }
-    void ReturnColor(){
-      
-      r = 0;
-      g = 0;
-      b = 0;
-      tcs.getRawData(&r,&g,&b);
-      
-      rcol = r;
-      bcol = b;
-      gcol = g;
-    }
-};
-    
 
 class UltraSonic{
   public:
@@ -179,6 +156,47 @@ class MotorCtrl{
     }
 };
 
+class Color{
+  public:
+  
+    uint16_t r, g, b, c, colorTemp, lux;
+    
+    void setupcolor(){
+      tcs.begin();
+    }
+    void ReturnColor(){
+      
+      r = 0;
+      g = 0;
+      b = 0;
+          
+    
+      tcs.getRawData(&r, &g, &b, &c);
+      // colorTemp = tcs.calculateColorTemperature(r, g, b);
+      colorTemp = tcs.calculateColorTemperature_dn40(r, g, b, c);
+      lux = tcs.calculateLux(r, g, b);
+
+    }
+};
+    
+
+
+
+void ledsend(){
+  int i = 0;
+  int len = 100;
+  while (i < 6000){
+    
+    digitalWrite(ledpin, HIGH);
+    delay(len);
+    digitalWrite(ledpin, LOW);
+    delay(len);
+    i+= len*2;
+  }
+  
+}
+
+
 
 void setup() {
   Serial.begin(9600);
@@ -196,15 +214,41 @@ void setup() {
 }
 
 
+
 void checkred(){
   Color ColorSensor;
   ColorSensor.ReturnColor();
-  Serial.println("COLOR:");
-  Serial.println(ColorSensor.r);
-  Serial.println(ColorSensor.g);
-  Serial.println(ColorSensor.b);
-  if (ColorSensor.r > 5 && ColorSensor.g < 5 && ColorSensor.b < 5){
+  Serial.println("COLOR FOR RED:");
+  int colr = ColorSensor.r;
+  int colg = ColorSensor.g;
+  int colb = ColorSensor.b;
+  
+  Serial.println(colr);
+  Serial.println(colg);
+  Serial.println(colb);
+  if ((colr - colminred >= colg) && (colr - colminred >= colb)){
     ledsend();
+  }
+}
+void checkblack(){
+  Color ColorSensor;
+  ColorSensor.ReturnColor();
+  MotorCtrl Motors;
+  Serial.println("COLOR FOR BLACK:");
+  int colr = ColorSensor.r;
+  int colg = ColorSensor.g;
+  int colb = ColorSensor.b;
+  Serial.println(colr);
+  Serial.println(colg);
+  Serial.println(colb);
+  if ((colr <= colmaxval) && (colg <= colmaxval) && (colb <= colmaxval)){
+    
+    Motors.LEFT();
+    delay(turnlen);
+    Motors.STOP();
+    delay(betw);
+    Motors.FW();
+    delay(burstlen);
   }
 }
 
@@ -228,27 +272,25 @@ void step(){
   MotorCtrl Motors;
   UltraSonic Sonic;
   //Motors.STOP();
-  Serial.println("sonic");
+  Serial.println("sonic...");
   delay (50);
   float Leftval = Sonic.returndistLeft();
   float Frontval = Sonic.returndistFront();
   float Rightval = Sonic.returndistRight();
   delay (50);
-  Serial.println("sonicend");
+  Serial.println("...sonicend");
   
+  Serial.println("sensors LFR:");
   Serial.println(Leftval);
   Serial.println(Frontval);
   Serial.println(Rightval);
-  Serial.println("");
-  int distanceopen = 15;
+  Serial.println("next sequence:");
   int next = getnextstep(Leftval > distanceopen,Frontval > distanceopen,Rightval > distanceopen);
   Serial.println(next);
-  int onelen = 300;
-  int burstlen = 500;                                            
-  int caliback = 75;
-  int turnlen = 400;
-  int betw = 200;
-  int turnback = 50;
+  
+  Serial.println("checking for colors...");
+  checkblack();
+  checkred();
 
   if (Frontval < distanceopen){
     Motors.FW();
@@ -313,5 +355,5 @@ void loop(){
   checkred();
   //step();
   //Motors.FW();
-  delay(100);
+  delay(3000);
 }
