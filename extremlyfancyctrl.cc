@@ -17,19 +17,43 @@
 #define trigPinLeft 4
 #define echoPinRight 7
 #define trigPinRight 6
+#define ledpin 11
+
+int rcol= 0;
+int gcol= 0;
+int bcol = 0;
 
 Adafruit_TCS34725 tcs = Adafruit_TCS34725();
 
+
+void ledsend(){
+  digitalWrite(ledpin, HIGH);
+  delay(5000);
+  digitalWrite(ledpin, LOW);
+  
+}
+
 class Color{
   public:
+  
+    int r = 0;
+    int g = 0;
+    int b = 0;
     void setupcolor(){
       tcs.begin();
     }
-    int * ReturnColor(){
+    void ReturnColor(){
+      
+      r = 0;
+      g = 0;
+      b = 0;
       tcs.getRawData(&r,&g,&b);
-      color[3] = [r,g,b];
-      return color;
+      
+      rcol = r;
+      bcol = b;
+      gcol = g;
     }
+};
     
 
 class UltraSonic{
@@ -158,6 +182,7 @@ class MotorCtrl{
 
 void setup() {
   Serial.begin(9600);
+  pinMode(ledpin, OUTPUT); 
   MotorCtrl Motors;
   Motors.setupmotors();
   Motors.setspeed(0.5);
@@ -168,6 +193,19 @@ void setup() {
   
   Serial.println("setup complete!");
 
+}
+
+
+void checkred(){
+  Color ColorSensor;
+  ColorSensor.ReturnColor();
+  Serial.println("COLOR:");
+  Serial.println(ColorSensor.r);
+  Serial.println(ColorSensor.g);
+  Serial.println(ColorSensor.b);
+  if (ColorSensor.r > 5 && ColorSensor.g < 5 && ColorSensor.b < 5){
+    ledsend();
+  }
 }
 
 
@@ -272,9 +310,8 @@ void step(){
 void loop(){
   MotorCtrl Motors;
   UltraSonic Sonic;
-  Color ColorSensor;
-  Serial.println(ColorSensor.ReturnColor());
+  checkred();
   //step();
   //Motors.FW();
-  delay(10);
+  delay(100);
 }
