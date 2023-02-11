@@ -4,6 +4,7 @@
 #include <Adafruit_SPIDevice.h>
 #include <Wire.h>
 #include "Adafruit_TCS34725.h"
+#include <Servo.h>
 
 #define motorPinL1 22
 #define motorPinL2 24
@@ -18,7 +19,6 @@
 #define echoPinRight 7
 #define trigPinRight 6
 #define ledpin 11
-#define dropoffpin 30
 
 
 int onelen = 300;
@@ -27,7 +27,7 @@ int caliback = 150;
 int turnlen = 450;
 int turnfwd = 100;
 int checklen = 100;
-
+int dropoffdeg = 90;
 int betw = 200;
 
 int colmaxval = 50;
@@ -37,7 +37,7 @@ int distanceopen = 20;
 
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
 
-
+Servo Dropoff;
 class UltraSonic{
   public:
     int returndistFront(){
@@ -108,7 +108,6 @@ class MotorCtrl{
       pinMode(motorPinR2, OUTPUT);
       pinMode(motorSpeedL,OUTPUT);
       pinMode(motorSpeedR,OUTPUT);
-      pinMode(dropoffpin, OUTPUT);
     }
 
     void setspeed(float speed){
@@ -117,9 +116,9 @@ class MotorCtrl{
     }
 
     void dropoff(){
-      analogWrite(dropoffpin,HIGH);
-      delay(50);
-      analogWrite(dropoffpin,LOW);
+      Dropoff.writeMicroseconds(900);
+      delay(700);
+      Dropoff.writeMicroseconds(1600);
     }
     
     void mL_SP(float speed){
@@ -238,7 +237,7 @@ void setup() {
   Sonic.setupsensor();
   Color ColorSensor;
   ColorSensor.setupcolor();
-  
+  Dropoff.attach(30);
   Serial.println("setup complete!");
 
 }
@@ -427,6 +426,7 @@ void loop(){
   UltraSonic Sonic;
   //checkred();
   step();
+  //Motors.dropoff();
   //Motors.mR_BW();
   //Motors.mL_BW();
   delay(100);
