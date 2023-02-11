@@ -20,12 +20,12 @@
 #define ledpin 11
 
 
-int onelen = 200;
+int onelen = 300;
 int burstlen = 500;
 int caliback = 75;
 int turnlen = 400;
 int betw = 200;
-int turnback = 50;
+int turnfwd = 100;
 int colmaxval = 2;
 int colminred = 1;
 int distanceopen = 15;
@@ -215,7 +215,7 @@ void setup() {
 
 
 
-void checkred(){
+bool checkred(){
   Color ColorSensor;
   ColorSensor.ReturnColor();
   Serial.println("COLOR FOR RED:");
@@ -228,9 +228,11 @@ void checkred(){
   Serial.println(colb);
   if ((colr - colminred >= colg) && (colr - colminred >= colb)){
     ledsend();
+    return true;
   }
+  return false;
 }
-void checkblack(){
+bool checkblack(){
   Color ColorSensor;
   ColorSensor.ReturnColor();
   MotorCtrl Motors;
@@ -249,7 +251,9 @@ void checkblack(){
     delay(betw);
     Motors.FW();
     delay(burstlen);
+    return true;
   }
+  return false;
 }
 
 
@@ -265,6 +269,20 @@ int getnextstep(bool left,bool front,bool right){
     return 3;
   }
   return 0;
+}
+
+void delaywithcolorcheck(int duration, int interval){
+  int i = 0;
+  while (i < duration){
+    delay(interval);
+    i+=interval;
+    if(checkred());{
+      break;
+    }
+    if(checkblack()){
+      break;
+    }
+  }
 }
 
 void step(){
@@ -306,14 +324,14 @@ void step(){
 
   if (next == 2){
     Motors.FW();
-    delay(onelen);
+    delaywithcolorcheck(onelen,50);
   }
   
 
 
   if (next == 1 || next == 3){
-    Motors.BW();
-    delay(turnback);
+    Motors.FW();
+    delay(turnfwd);
     Motors.STOP();
     delay(betw);
   }
@@ -323,7 +341,7 @@ void step(){
     Motors.STOP();
     delay(betw);
     Motors.FW();
-    delay(burstlen);
+    delaywithcolorcheck(burstlen,50);
   }
   if (next == 3){
     Motors.RIGHT();
