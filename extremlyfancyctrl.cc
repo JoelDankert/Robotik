@@ -24,8 +24,8 @@
 int onelen = 300;
 int burstlen = 500;
 int caliback = 150;
-int turnlen = 400;
-int turnfwd = 200;
+int turnlen = 450;
+int turnfwd = 100;
 
 int betw = 200;
 
