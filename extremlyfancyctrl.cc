@@ -22,15 +22,15 @@
 
 
 int onelen = 300;
-int burstlen = 500;
+int burstlen = 600;
 int caliback = 150;
 int turnlen = 450;
 int turnfwd = 100;
 
 int betw = 200;
 
-int colmaxval = 100;
-int colminred = 70;
+int colmaxval = 50;
+int colminred = 50;
 int distanceopen = 20;
   
 
@@ -107,7 +107,7 @@ class MotorCtrl{
       pinMode(motorPinR2, OUTPUT);
       pinMode(motorSpeedL,OUTPUT);
       pinMode(motorSpeedR,OUTPUT);
-      pinMode(dropoffpin,OUTPUT);
+      pinMode(dropoffpin, OUTPUT);
     }
 
     void setspeed(float speed){
