@@ -18,6 +18,7 @@
 #define echoPinRight 7
 #define trigPinRight 6
 #define ledpin 11
+#define dropoffpin 30
 
 
 int onelen = 300;
@@ -91,12 +92,20 @@ class MotorCtrl{
       pinMode(motorPinR2, OUTPUT);
       pinMode(motorSpeedL,OUTPUT);
       pinMode(motorSpeedR,OUTPUT);
+      pinMode(dropoffpin,OUTPUT);
     }
 
     void setspeed(float speed){
       mL_SP(speed);
       mR_SP(speed);
     }
+
+    void dropoff(){
+      analogWrite(dropoffpin,HIGH);
+      delay(50);
+      analogWrite(dropoffpin,LOW);
+    }
+    
     void mL_SP(float speed){
       analogWrite(motorSpeedL, (255*speed));
     }
@@ -218,6 +227,7 @@ void setup() {
 bool checkred(){
   Color ColorSensor;
   ColorSensor.ReturnColor();
+  MotorCtrl Motors;
   Serial.println("COLOR FOR RED:");
   int colr = ColorSensor.r;
   int colg = ColorSensor.g;
@@ -228,6 +238,7 @@ bool checkred(){
   Serial.println(colb);
   if ((colr - colminred >= colg) && (colr - colminred >= colb)){
     ledsend();
+    Motors.dropoff();
     return true;
   }
   return false;
@@ -370,8 +381,8 @@ void step(){
 void loop(){
   MotorCtrl Motors;
   UltraSonic Sonic;
-  checkred();
-  //step();
+  //checkred();
+  step();
   //Motors.FW();
   delay(3000);
 }
