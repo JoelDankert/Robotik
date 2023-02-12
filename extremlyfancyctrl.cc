@@ -30,7 +30,7 @@ int checklen = 100;
 int dropoffdeg = 90;
 int betw = 200;
 
-int colmaxval = 50;
+int colmaxval = 100;
 int colminred = 70;
 int distanceopen = 20;
   
@@ -178,11 +178,7 @@ class MotorCtrl{
     }
 };
 
-void dropoff(){
-      Dropoff.writeMicroseconds(900);
-      delay(900);
-      Dropoff.writeMicroseconds(1600);
-    }
+
 
 class Color{
   public:
@@ -233,7 +229,7 @@ void ledsend(){
 
 void setup() {
   Serial.begin(9600);
-  Dropoff.attach(30);
+  Dropoff.attach(10);
   pinMode(ledpin, OUTPUT); 
   MotorCtrl Motors;
   Motors.setupmotors();
@@ -310,6 +306,13 @@ int getnextstep(bool left,bool front,bool right){
   
   return 0;
 }
+
+void dropoff(){
+   Dropoff.writeMicroseconds(900);
+   delay(900);
+   Dropoff.writeMicroseconds(1600);
+}
+
 void step(){
 
   MotorCtrl Motors;
@@ -428,7 +431,7 @@ void loop(){
   UltraSonic Sonic;
   //checkred();
   step();
-  //Motors.dropoff();
+  //dropoff();
   //Motors.mR_BW();
   //Motors.mL_BW();
   delay(100);
