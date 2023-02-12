@@ -21,16 +21,16 @@
 #define ledpin 11
 
 
-int onelen = 300;
-int burstlen = 600;
-int caliback = 150;
-int turnlen = 450;
-int turnfwd = 100;
+int onelen = 250;
+int burstlen = 400;
+int caliback = 100;
+int turnlen = 300;
+int turnfwd = 50;
 int checklen = 100;
 int dropoffdeg = 90;
 int betw = 200;
 
-int colmaxval = 100;
+int colmaxval = 50;
 int colminred = 70;
 int distanceopen = 20;
   
@@ -337,7 +337,6 @@ void step(){
   Serial.println(next);
   
   Serial.println("checking for colors...");
-  checkblack();
   checkred();
   delay(betw);
 
@@ -381,11 +380,6 @@ void step(){
     Motors.STOP();
     delay(betw);
     Motors.FW();
-    delay(checklen);
-    Motors.STOP();
-    checkblack();
-    checkred();
-    Motors.FW();
     delay(burstlen);
     Motors.STOP();
   }
@@ -395,11 +389,6 @@ void step(){
     Motors.STOP();
     checkred();
     delay(betw);
-    Motors.FW();
-    delay(checklen);
-    Motors.STOP();
-    checkblack();
-    checkred();
     Motors.FW();
     delay(burstlen);
     Motors.STOP();
