@@ -31,13 +31,14 @@ int dropoffdeg = 90;
 int betw = 200;
 
 int colmaxval = 50;
-int colminred = 50;
+int colminred = 70;
 int distanceopen = 20;
   
 
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
 
 Servo Dropoff;
+      
 class UltraSonic{
   public:
     int returndistFront(){
@@ -102,6 +103,7 @@ class MotorCtrl{
   public:
     void setupmotors()
     {
+      
       pinMode(motorPinL1, OUTPUT);
       pinMode(motorPinL2, OUTPUT);
       pinMode(motorPinR1, OUTPUT);
@@ -115,11 +117,7 @@ class MotorCtrl{
       mR_SP(speed);
     }
 
-    void dropoff(){
-      Dropoff.writeMicroseconds(900);
-      delay(700);
-      Dropoff.writeMicroseconds(1600);
-    }
+    
     
     void mL_SP(float speed){
       analogWrite(motorSpeedL, (255*speed));
@@ -180,6 +178,12 @@ class MotorCtrl{
     }
 };
 
+void dropoff(){
+      Dropoff.writeMicroseconds(900);
+      delay(900);
+      Dropoff.writeMicroseconds(1600);
+    }
+
 class Color{
   public:
   
@@ -229,6 +233,7 @@ void ledsend(){
 
 void setup() {
   Serial.begin(9600);
+  Dropoff.attach(30);
   pinMode(ledpin, OUTPUT); 
   MotorCtrl Motors;
   Motors.setupmotors();
@@ -237,7 +242,6 @@ void setup() {
   Sonic.setupsensor();
   Color ColorSensor;
   ColorSensor.setupcolor();
-  Dropoff.attach(30);
   Serial.println("setup complete!");
 
 }
@@ -258,7 +262,7 @@ bool checkred(){
   Serial.println(colb);
   if ((colr - colminred >= colg) && (colr - colminred >= colb)){
     ledsend();
-    Motors.dropoff();
+    dropoff();
     return true;
   }
   return false;
@@ -366,14 +370,12 @@ void step(){
     Motors.BW();
     delay(turnfwd);
     Motors.STOP();
-    checkred();
     delay(betw);
   }
   if (next == 1){
     Motors.LEFT();
     delay(turnlen);
     Motors.STOP();
-    checkred();
     delay(betw);
     Motors.FW();
     delay(checklen);
