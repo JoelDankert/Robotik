@@ -5,6 +5,8 @@
 #define motorSpeedL 9
 #define motorSpeedR 10
 
+//1665+14 = js
+
 void setuppins()
 {
   pinMode(motorPinL1, OUTPUT);
@@ -25,6 +27,10 @@ void Test()
 
 void setup(){
   Serial.begin(9600);
-  Test()
+  setuppins();
+}
+
+void loop(){
   
+  Test();
 }
