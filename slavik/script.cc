@@ -14,11 +14,13 @@
 #define trigPinFront 2
 #define echoPinLeft 5
 #define trigPinLeft 4
-#define echoPinRight 7
-#define trigPinRight 6
+#define echoPinRightFront 7
+#define trigPinRightFront 6
+#define echoPinRightBack 9
+#define trigPinRightBack 8
 
 // Global variables for speed control and sensor threshold
-float globalSpeed = 0.5; // Speed scale from 0 to 1
+float globalSpeed = 0.2; // Speed scale from 0 to 1
 int distanceThreshold = 20; // Distance threshold for obstacle detection
 
 // Color sensor setup
@@ -112,6 +114,68 @@ String detectColor() {
     return "none";
   }
 }
+
+// Function to get sensor distance based on specified sensor
+int getSensor(String sensor) {
+  int sensorPinTrig, sensorPinEcho;
+  
+  // Determine which sensor is being requested
+  if (sensor == "L") {
+    sensorPinTrig = trigPinLeft;
+    sensorPinEcho = echoPinLeft;
+  } else if (sensor == "F") {
+    sensorPinTrig = trigPinFront;
+    sensorPinEcho = echoPinFront;
+  } else if (sensor == "RF") {
+    sensorPinTrig = trigPinRightFront;
+    sensorPinEcho = echoPinRightFront;
+  } else if (sensor == "RB") {
+    sensorPinTrig = trigPinRightBack;
+    sensorPinEcho = echoPinRightBack;
+  } else {
+    // If the sensor code is invalid, return -1 indicating an error
+    return -1;
+  }
+
+  // Activate the specified sensor and measure the distance
+  digitalWrite(sensorPinTrig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(sensorPinTrig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(sensorPinTrig, LOW);
+  long duration = pulseIn(sensorPinEcho, HIGH);
+
+  // Calculate and return the distance
+  if (duration == 0) {
+    // Return a high value to indicate out of range
+    return 1000;
+  }
+  return duration * 0.034 / 2;
+}
+
+// Updated center function to use getSensor with strings
+void center() {
+  int threshold = 1; // Threshold value for alignment accuracy
+  int distanceRightFront = getSensor("RF");
+  int distanceRightBack = getSensor("RB");
+  
+  // Adjust the robot until the sensor values are within the threshold
+  while (abs(distanceRightFront - distanceRightBack) > threshold) {
+    if (distanceRightFront > distanceRightBack) {
+      // If the front sensor detects a longer distance, turn the robot right slightly
+      turnRight(100); // Adjust the duration as needed for slight adjustments
+    } else {
+      // If the back sensor detects a longer distance, turn the robot left slightly
+      turnLeft(100); // Adjust the duration as needed for slight adjustments
+    }
+    // Update distance measurements
+    distanceRightFront = getSensor("RF");
+    distanceRightBack = getSensor("RB");
+  }
+}
+
+// Rest of the existing code...
+
 
 void loop() {
   // Example usage
