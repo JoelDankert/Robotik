@@ -2,12 +2,12 @@
 #include <Servo.h>
 
 // Motor control pins
-#define motorPinL1 22
-#define motorPinL2 24
-#define motorPinR1 26
-#define motorPinR2 28
-#define motorSpeedL 8
-#define motorSpeedR 9
+#define motorPinL1 2
+#define motorPinL2 3
+#define motorPinR1 4
+#define motorPinR2 5
+#define motorSpeedL 6
+#define motorSpeedR 7
 
 // Ultrasonic sensor pins
 #define echoPinFront 3
@@ -20,7 +20,7 @@
 #define trigPinRightBack 8
 
 // Global variables for speed control and sensor centerthresh
-float globalSpeed = 0.2; // Speed scale from 0 to 1
+float globalSpeed = 1; // Speed scale from 0 to 1
 #define frontSensorOffset 10 // Example value in centimeters
 #define mazeGridSize 40 // Example value in centimeters, adjust as per your maze
 #define timeForward 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
@@ -236,8 +236,10 @@ void CEN(){
 
 void loop() {
   setMotorSpeed(globalSpeed); // Set global speed
-  int frontDistance = getSensorDistance(trigPinFront, echoPinFront);
-  Serial.println(frontDistance);
-  String color = detectColor();
-  Serial.println(color);
+  moveForward(1000);
+  
+  
+  //int frontDistance = getSensorDistance(trigPinFront, echoPinFront);
+  //Serial.println(frontDistance);
+  //center();
 }
