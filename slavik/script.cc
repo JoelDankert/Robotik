@@ -19,9 +19,10 @@
 #define echoPinRightBack 9
 #define trigPinRightBack 8
 
-// Global variables for speed control and sensor threshold
+// Global variables for speed control and sensor centerthresh
 float globalSpeed = 0.2; // Speed scale from 0 to 1
-int distanceThreshold = 20; // Distance threshold for obstacle detection
+#define frontSensorOffset 10 // Example value in centimeters
+#define mazeGridSize 40 // Example value in centimeters, adjust as per your maze
 
 // Color sensor setup
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
@@ -40,8 +41,10 @@ void setup() {
   pinMode(echoPinFront, INPUT);
   pinMode(trigPinLeft, OUTPUT);
   pinMode(echoPinLeft, INPUT);
-  pinMode(trigPinRight, OUTPUT);
-  pinMode(echoPinRight, INPUT);
+  pinMode(trigPinRightFront, OUTPUT);
+  pinMode(echoPinRightFront, INPUT);
+  pinMode(trigPinRightBack, OUTPUT);
+  pinMode(echoPinRightBack, INPUT);
 
   // Initialize color sensor
   if (!tcs.begin()) {
@@ -118,6 +121,7 @@ String detectColor() {
 // Function to get sensor distance based on specified sensor
 int getSensor(String sensor) {
   int sensorPinTrig, sensorPinEcho;
+  float conversionvalue = 1;
   
   // Determine which sensor is being requested
   if (sensor == "L") {
@@ -150,17 +154,17 @@ int getSensor(String sensor) {
     // Return a high value to indicate out of range
     return 1000;
   }
-  return duration * 0.034 / 2;
+  return (duration * 0.034 / 2)*conversionvalue;
 }
 
 // Updated center function to use getSensor with strings
 void center() {
-  int threshold = 1; // Threshold value for alignment accuracy
+  int centerthresh = 1; // centerthresh value for alignment accuracy
   int distanceRightFront = getSensor("RF");
   int distanceRightBack = getSensor("RB");
   
-  // Adjust the robot until the sensor values are within the threshold
-  while (abs(distanceRightFront - distanceRightBack) > threshold) {
+  // Adjust the robot until the sensor values are within the centerthresh
+  while (abs(distanceRightFront - distanceRightBack) > centerthresh) {
     if (distanceRightFront > distanceRightBack) {
       // If the front sensor detects a longer distance, turn the robot right slightly
       turnRight(100); // Adjust the duration as needed for slight adjustments
@@ -174,16 +178,43 @@ void center() {
   }
 }
 
-// Rest of the existing code...
+
+void centerFront() {
+  bool isCentered = false;
+  int centerthresh = 1; // centerthresh value for alignment accuracy
+  int targetCenter = mazeGridSize / 2; // The target center position within a grid
+
+  while (!isCentered) {
+    int frontDistance = getSensor("F") + frontSensorOffset; // Get the adjusted front distance
+    int positionInGrid = frontDistance % mazeGridSize; // Calculate the position within the grid
+    int differenceFromCenter = abs(positionInGrid - targetCenter);
+
+    if (differenceFromCenter <= centerthresh) {
+      // If within centerthresh, consider it centered
+      isCentered = true;
+    } else if (positionInGrid < targetCenter) {
+      // If the robot is closer to the front of the grid, move forward
+      moveForward(100); // Move a quarter grid size as an example
+    } else {
+      // If the robot is closer to the back of the grid, move backward
+      moveBackward(100); // Move a quarter grid size as an example
+    }
+    
+    // Small delay to allow sensor readings to stabilize
+    delay(100);
+  }
+}
+
+void CEN(){
+  center();
+  centerFront();
+}
 
 
 void loop() {
-  // Example usage
   setMotorSpeed(globalSpeed); // Set global speed
-  moveForward(1000); // Move forward for 1000ms
   int frontDistance = getSensorDistance(trigPinFront, echoPinFront);
   Serial.println(frontDistance);
   String color = detectColor();
   Serial.println(color);
-  // Implement your logic based on sensor readings and color detection
 }
