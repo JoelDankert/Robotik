@@ -23,6 +23,8 @@
 float globalSpeed = 0.2; // Speed scale from 0 to 1
 #define frontSensorOffset 10 // Example value in centimeters
 #define mazeGridSize 40 // Example value in centimeters, adjust as per your maze
+#define timeForward 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
+
 
 // Color sensor setup
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
@@ -203,6 +205,17 @@ void centerFront() {
     // Small delay to allow sensor readings to stabilize
     delay(100);
   }
+}
+
+void FWD() {
+  // Moves the robot forward for a fixed duration to approach the next grid
+  moveForward(timeForward);
+
+  // Calls center function to align orientation
+  center();
+
+  // Calls centerFront function to ensure the robot is centered within the grid square
+  centerFront();
 }
 
 void CEN(){
