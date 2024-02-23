@@ -2,10 +2,10 @@
 #include <Servo.h>
 
 // Motor control pins
-#define motorPinL1 3
-#define motorPinL2 2
-#define motorPinR1 4
-#define motorPinR2 5
+#define motorPinR1 3
+#define motorPinR2 2
+#define motorPinL1 4
+#define motorPinL2 5
 #define motorSpeedL 6
 #define motorSpeedR 7
 
@@ -19,6 +19,8 @@
 #define echoPinRightBack 25
 #define trigPinRightBack 24
 
+#define servopin 9 
+
 #define RED_PIN 51
 #define GREEN_PIN 52
 #define BLUE_PIN 53
@@ -29,7 +31,9 @@ float globalSpeed = 1; // Speed scale from 0 to 1
 #define mazeGridSize 40 // Example value in centimeters, adjust as per your maze
 //#define timeForward 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
 #define timeTurn 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
+#define timeFwd 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
 
+Servo dropoff;
 
 // Color sensor setup
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
@@ -62,6 +66,43 @@ void setup() {
   if (!tcs.begin()) {
     Serial.println("Couldn't find color sensor");
   }
+
+  dropoff.attach(servopin); // Attaches the servo on pin 9 to the servo object
+  dropoff.write(0); // Make sure the servo is at position 0 degrees
+
+  setColor('R');  
+  delay(100);
+  setColor('G');
+  delay(100);
+  setColor('B');
+  delay(100);
+  setColor('R');
+  delay(100);
+  setColor('G');
+  delay(100);
+  setColor('B');
+  delay(100);
+  setColor('R');
+  delay(100);
+  setColor('G');
+  delay(100);
+  setColor('B');
+  delay(100);
+  setColor('R');
+  delay(100);
+  setColor('G');
+  delay(100);
+  setColor('B');
+  delay(100);
+  setColor('R');
+  delay(100);
+  setColor('G');
+  delay(100);
+  setColor('B');
+  delay(100);
+  setColor('X');
+
+
 }
 
 
@@ -193,61 +234,105 @@ int getSensor(String sensor) {
   return (duration * 0.034 / 2)*conversionvalue;
 }
 
+void servodrop(){
+  dropoff.write(90); // Turn servo to 90 degrees
+  delay(1000); // Wait for 1 second
+  dropoff.write(0); // Return servo to 0 degrees
+  delay(1000); // Wait for 1 second
+}
 
-void RightTurnSequence(){
-  setColor('G');
-  delay(5000);
-  //moveForward(100);
-  //turnright(100);
-  //moveForeward(100);
+void tryrightturn(){
+  while(getSensor("RF") > 15 && getSensor("F") > 5){
+    delay(50);
+    if (getSensor("RB") < 15){
+      moveForward(50);
+    }
+    else{
+      turnRight(timeTurn);
+      moveForward(timeFwd);
+      break;
+    }
+  }
 }
 
 void FWD() {
-  int targetDistance = 5; // Target distance from the wall in centimeters
-  int wallDistance = 3;
+  int targetDistance = 7; // Target distance from the wall in centimeters
+  int wallDistance = 7;
   int errorMargin = 1; // Allowable error margin in centimeters
-  int errorMarginCorrect = 1; // Allowable error margin in centimeters
-  int turnDistance = 20; // Allowable error margin in centimeters
+  int errorMarginCorrect = 2; // Allowable error margin in centimeters
+  long lastmil = 0;
 
   while (true) { // Infinite loop to keep moving forward
-    delay(1000);
+    delay(50);
+    setColor('X');
     int distanceRightFront = getSensor("RF");
     int distanceRightBack = getSensor("RB");
     int distanceFront = getSensor("F");
     int averageDistance = (distanceRightFront + distanceRightBack) / 2; // Calculate the average distance to the wall
 
+    if(detectColor()=="red"){
+      long currentmil = millis();
+      if (currentmil-lastmil >= 2500){
+        lastmil = currentmil;
+        setColor('R');
+        delay(100);
+        setColor('X');
+        delay(100);
+        setColor('R');
+        delay(100);
+        setColor('X');
+        delay(100);
+        setColor('R');
+        delay(100);
+        setColor('X');
+        delay(100);
+        setColor('R');
+        delay(100);
+        setColor('X');
+        delay(100);
+        setColor('R');
+        delay(100);
+        setColor('X');
+        servodrop();
+      }
+    }
 
-    //if (distanceRightFront > turnDistance){
-    //    RightTurnSequence();
-    //    continue;
-    //}
-    
+    if(detectColor()=="black"){
+      turnLeft(2000);
+    }
+
     if (distanceFront < wallDistance){
-        turnLeft(100);
+        turnLeft(timeTurn);
         continue;
     }
 
     //too close
-    if (distanceRightFront < targetDistance-errorMarginCorrect){
+    if (averageDistance < targetDistance-errorMarginCorrect){
+      setColor('B');
       turnLeft(100);
-      setColor('B');
+      moveForward(50);
+        continue;
     }
-    if (distanceRightFront > targetDistance+errorMarginCorrect){
+    //too far
+    if (averageDistance > targetDistance+errorMarginCorrect){
+      setColor('G');
       turnRight(100);
-      setColor('B');
+      moveForward(100);
+        continue; 
     }
     
+      setColor('X');
     //straight
     if (abs(distanceRightFront - distanceRightBack) <= errorMargin){
-      moveForward(100);
+      moveForward(50);
     }
     else if (distanceRightFront > distanceRightBack){
-      turnRight(100);
-      moveForward(100);
+      turnRight(20);
+      moveForward(50);
     }
     else{
-      turnLeft(100);
-      moveForward(100);
+      turnLeft(20);
+      moveForward(50);
     }
 
 
@@ -259,6 +344,9 @@ void FWD() {
 void loop() {
   // Read distances from each sensor
   FWD();
+  //turnRight(500);
+  //turnLeft(500);
+  delay(1000);
   //TESTSENSORS();
   // Delay for a bit before reading again to make the output readable
   //delay(1000); // 1-second delay
