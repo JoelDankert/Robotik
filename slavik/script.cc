@@ -19,19 +19,19 @@
 #define echoPinRightBack 25
 #define trigPinRightBack 24
 
-#define servopin 9 
+#define servopin 9
+#define pinLED 40
 
 #define RED_PIN 51
 #define GREEN_PIN 52
 #define BLUE_PIN 53
+
 
 // Global variables for speed control and sensor centerthresh
 float globalSpeed = 1; // Speed scale from 0 to 1
 #define frontSensorOffset 10 // Example value in centimeters
 #define mazeGridSize 40 // Example value in centimeters, adjust as per your maze
 //#define timeForward 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
-#define timeTurn 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
-#define timeFwd 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
 
 Servo dropoff;
 
@@ -60,6 +60,9 @@ void setup() {
   pinMode(GREEN_PIN, OUTPUT);
   pinMode(BLUE_PIN, OUTPUT);
 
+  
+  pinMode(pinLED, OUTPUT);
+
   setColor('X');
 
   // Initialize color sensor
@@ -68,33 +71,25 @@ void setup() {
   }
 
   dropoff.attach(servopin); // Attaches the servo on pin 9 to the servo object
-  dropoff.write(0); // Make sure the servo is at position 0 degrees
+  dropoff.write(90); // Make sure the servo is at position 0 degrees
 
-  setColor('R');  
+  digitalWrite(pinLED, LOW);
+
+  setColor('G');
+  delay(100);
+  setColor('B');
   delay(100);
   setColor('G');
   delay(100);
   setColor('B');
   delay(100);
-  setColor('R');
-  delay(100);
   setColor('G');
   delay(100);
   setColor('B');
   delay(100);
-  setColor('R');
-  delay(100);
   setColor('G');
   delay(100);
   setColor('B');
-  delay(100);
-  setColor('R');
-  delay(100);
-  setColor('G');
-  delay(100);
-  setColor('B');
-  delay(100);
-  setColor('R');
   delay(100);
   setColor('G');
   delay(100);
@@ -123,6 +118,10 @@ void setColor(char color) {
       break;
     case 'B':
       digitalWrite(BLUE_PIN, HIGH);
+      break;
+    case 'C':
+      digitalWrite(BLUE_PIN, HIGH);
+      digitalWrite(GREEN_PIN, HIGH);
       break;
     default:
       // If the input is not R, G, or B, do nothing (all LEDs remain off)
@@ -186,13 +185,28 @@ void motorsOff(){
 String detectColor() {
   uint16_t clear, red, green, blue;
   tcs.getRawData(&red, &green, &blue, &clear);
-  if (red > green && red > blue && red > 100) {
+
+  if (green*2 < red && blue*2 < red) {
     return "red";
-  } else if (red < 50 && green < 50 && blue < 50) {
+  } else if (red < 10 && blue < 10 && green < 10) {
     return "black";
   } else {
     return "none";
   }
+}
+
+void printcolors() {
+  uint16_t clear, red, green, blue;
+  tcs.getRawData(&red, &green, &blue, &clear);
+  Serial.print("Red: ");
+  Serial.print(red);
+  Serial.print(", Green: ");
+  Serial.print(green);
+  Serial.print(", Blue: ");
+  Serial.print(blue);
+  Serial.print(", Clear: ");
+  Serial.println(clear);
+
 }
 
 // Function to get sensor distance based on specified sensor
@@ -235,10 +249,13 @@ int getSensor(String sensor) {
 }
 
 void servodrop(){
-  dropoff.write(90); // Turn servo to 90 degrees
-  delay(1000); // Wait for 1 second
-  dropoff.write(0); // Return servo to 0 degrees
-  delay(1000); // Wait for 1 second
+  dropoff.write(0);
+  delay(500);
+  dropoff.write(90);
+  delay(50);
+  dropoff.write(180);
+  delay(500);
+  dropoff.write(90);
 }
 
 void tryrightturn(){
@@ -248,8 +265,8 @@ void tryrightturn(){
       moveForward(50);
     }
     else{
-      turnRight(timeTurn);
-      moveForward(timeFwd);
+      turnRight(300);
+      moveForward(300);
       break;
     }
   }
@@ -261,50 +278,50 @@ void FWD() {
   int errorMargin = 1; // Allowable error margin in centimeters
   int errorMarginCorrect = 2; // Allowable error margin in centimeters
   long lastmil = 0;
+  long lastmil2 = 0;
 
   while (true) { // Infinite loop to keep moving forward
-    delay(50);
+    delay(10);
     setColor('X');
     int distanceRightFront = getSensor("RF");
     int distanceRightBack = getSensor("RB");
     int distanceFront = getSensor("F");
     int averageDistance = (distanceRightFront + distanceRightBack) / 2; // Calculate the average distance to the wall
 
-    if(detectColor()=="red"){
-      long currentmil = millis();
-      if (currentmil-lastmil >= 2500){
-        lastmil = currentmil;
-        setColor('R');
-        delay(100);
-        setColor('X');
-        delay(100);
-        setColor('R');
-        delay(100);
-        setColor('X');
-        delay(100);
-        setColor('R');
-        delay(100);
-        setColor('X');
-        delay(100);
-        setColor('R');
-        delay(100);
-        setColor('X');
-        delay(100);
-        setColor('R');
-        delay(100);
-        setColor('X');
-        servodrop();
+    long currentmil = millis();
+    if (currentmil-lastmil2 >= 2000){
+      lastmil2 = currentmil;
+      String col = detectColor();
+      if(col =="red"){
+        if (currentmil-lastmil >= 5000){
+          for (int i = 0; i < 25; i++) {
+            setColor('G');
+            delay(100);
+            setColor('X');
+            delay(100);
+          }
+          servodrop();
+          lastmil = currentmil;
+        }
       }
-    }
 
-    if(detectColor()=="black"){
-      turnLeft(2000);
+      if(col =="black"){
+        setColor('C');
+        turnLeft(300);
+      }
+
+
     }
+    
 
     if (distanceFront < wallDistance){
-        turnLeft(timeTurn);
-        continue;
+      moveBackward(100);
+      turnLeft(400);
+      continue;
     }
+    //if(getSensor("RF") > 15 && getSensor("F") > 5){
+    //  tryrightturn();
+    //}
 
     //too close
     if (averageDistance < targetDistance-errorMarginCorrect){
@@ -315,41 +332,38 @@ void FWD() {
     }
     //too far
     if (averageDistance > targetDistance+errorMarginCorrect){
-      setColor('G');
-      turnRight(100);
+      setColor('B');
       moveForward(100);
+      turnRight(50);
         continue; 
     }
     
       setColor('X');
     //straight
     if (abs(distanceRightFront - distanceRightBack) <= errorMargin){
-      moveForward(50);
+      moveForward(100);
     }
     else if (distanceRightFront > distanceRightBack){
-      turnRight(20);
-      moveForward(50);
+      turnRight(50);
     }
     else{
-      turnLeft(20);
-      moveForward(50);
+      turnLeft(50);
     }
 
-
+         
   }
 }
 
 
 
 void loop() {
-  // Read distances from each sensor
-  FWD();
-  //turnRight(500);
-  //turnLeft(500);
-  delay(1000);
   //TESTSENSORS();
-  // Delay for a bit before reading again to make the output readable
-  //delay(1000); // 1-second delay
+  //printcolors();
+  //Serial.print(detectColor());
+  FWD();
+  //servodrop();
+  
+  delay(5000);
 }
 
 
@@ -369,5 +383,7 @@ void TESTSENSORS(){
   Serial.print(" cm, Front: ");
   Serial.print(distanceFront);
   Serial.println(" cm");
+
+  printcolors();
 
 }
