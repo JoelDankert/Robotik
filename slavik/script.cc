@@ -2,29 +2,33 @@
 #include <Servo.h>
 
 // Motor control pins
-#define motorPinL1 2
-#define motorPinL2 3
+#define motorPinL1 3
+#define motorPinL2 2
 #define motorPinR1 4
 #define motorPinR2 5
 #define motorSpeedL 6
 #define motorSpeedR 7
 
 // Ultrasonic sensor pins
-#define echoPinFront 3
-#define trigPinFront 2
-#define echoPinLeft 5
-#define trigPinLeft 4
-#define echoPinRightFront 7
-#define trigPinRightFront 6
-#define echoPinRightBack 9
-#define trigPinRightBack 8
+#define echoPinFront 23
+#define trigPinFront 22
+#define echoPinLeft 29
+#define trigPinLeft 28
+#define echoPinRightFront 27
+#define trigPinRightFront 26
+#define echoPinRightBack 25
+#define trigPinRightBack 24
+
+#define RED_PIN 51
+#define GREEN_PIN 52
+#define BLUE_PIN 53
 
 // Global variables for speed control and sensor centerthresh
 float globalSpeed = 1; // Speed scale from 0 to 1
 #define frontSensorOffset 10 // Example value in centimeters
 #define mazeGridSize 40 // Example value in centimeters, adjust as per your maze
-#define timeForward 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
-#define timeRight 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
+//#define timeForward 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
+#define timeTurn 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
 
 
 // Color sensor setup
@@ -48,12 +52,43 @@ void setup() {
   pinMode(echoPinRightFront, INPUT);
   pinMode(trigPinRightBack, OUTPUT);
   pinMode(echoPinRightBack, INPUT);
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(BLUE_PIN, OUTPUT);
+
+  setColor('X');
 
   // Initialize color sensor
   if (!tcs.begin()) {
     Serial.println("Couldn't find color sensor");
   }
 }
+
+
+
+void setColor(char color) {
+  // Turn all LEDs off initially
+  digitalWrite(RED_PIN, LOW);
+  digitalWrite(GREEN_PIN, LOW);
+  digitalWrite(BLUE_PIN, LOW);
+  
+  // Turn on the selected LED
+  switch(color) {
+    case 'R':
+      digitalWrite(RED_PIN, HIGH);
+      break;
+    case 'G':
+      digitalWrite(GREEN_PIN, HIGH);
+      break;
+    case 'B':
+      digitalWrite(BLUE_PIN, HIGH);
+      break;
+    default:
+      // If the input is not R, G, or B, do nothing (all LEDs remain off)
+      break;
+  }
+}
+
 
 // Function to control motor speed
 void setMotorSpeed(float speed) {
@@ -68,6 +103,7 @@ void moveForward(int duration) {
   digitalWrite(motorPinR1, LOW);
   digitalWrite(motorPinR2, HIGH);
   delay(duration);
+  motorsOff();
 }
 
 void moveBackward(int duration) {
@@ -76,6 +112,7 @@ void moveBackward(int duration) {
   digitalWrite(motorPinR1, HIGH);
   digitalWrite(motorPinR2, LOW);
   delay(duration);
+  motorsOff();
 }
 
 void turnLeft(int duration) {
@@ -84,6 +121,7 @@ void turnLeft(int duration) {
   digitalWrite(motorPinR1, LOW);
   digitalWrite(motorPinR2, HIGH);
   delay(duration);
+  motorsOff();
 }
 
 void turnRight(int duration) {
@@ -92,21 +130,16 @@ void turnRight(int duration) {
   digitalWrite(motorPinR1, HIGH);
   digitalWrite(motorPinR2, LOW);
   delay(duration);
+  motorsOff();
 }
 
-// Function to get sensor distance
-int getSensorDistance(int sensorPinTrig, int sensorPinEcho) {
-  digitalWrite(sensorPinTrig, LOW);
-  delayMicroseconds(2);
-  digitalWrite(sensorPinTrig, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(sensorPinTrig, LOW);
-  long duration = pulseIn(sensorPinEcho, HIGH);
-  if (duration == 0) {
-    return 1000; // Out of range
-  }
-  return duration * 0.034 / 2;
+void motorsOff(){
+  digitalWrite(motorPinL1, LOW);
+  digitalWrite(motorPinL2, LOW);
+  digitalWrite(motorPinR1, LOW);
+  digitalWrite(motorPinR2, LOW);
 }
+
 
 // Function to detect color
 String detectColor() {
@@ -160,86 +193,93 @@ int getSensor(String sensor) {
   return (duration * 0.034 / 2)*conversionvalue;
 }
 
-// Updated center function to use getSensor with strings
-void center() {
-  int centerthresh = 1; // centerthresh value for alignment accuracy
-  int distanceRightFront = getSensor("RF");
-  int distanceRightBack = getSensor("RB");
-  
-  // Adjust the robot until the sensor values are within the centerthresh
-  while (abs(distanceRightFront - distanceRightBack) > centerthresh) {
-    if (distanceRightFront > distanceRightBack) {
-      // If the front sensor detects a longer distance, turn the robot right slightly
-      turnRight(100); // Adjust the duration as needed for slight adjustments
-    } else {
-      // If the back sensor detects a longer distance, turn the robot left slightly
-      turnLeft(100); // Adjust the duration as needed for slight adjustments
-    }
-    // Update distance measurements
-    distanceRightFront = getSensor("RF");
-    distanceRightBack = getSensor("RB");
-  }
-}
 
-
-void centerFront() {
-  bool isCentered = false;
-  int centerthresh = 1; // centerthresh value for alignment accuracy
-  int targetCenter = mazeGridSize / 2; // The target center position within a grid
-
-  while (!isCentered) {
-    int frontDistance = getSensor("F") + frontSensorOffset; // Get the adjusted front distance
-    int positionInGrid = frontDistance % mazeGridSize; // Calculate the position within the grid
-    int differenceFromCenter = abs(positionInGrid - targetCenter);
-
-    if (differenceFromCenter <= centerthresh) {
-      // If within centerthresh, consider it centered
-      isCentered = true;
-    } else if (positionInGrid < targetCenter) {
-      // If the robot is closer to the front of the grid, move forward
-      moveForward(100); // Move a quarter grid size as an example
-    } else {
-      // If the robot is closer to the back of the grid, move backward
-      moveBackward(100); // Move a quarter grid size as an example
-    }
-    
-    // Small delay to allow sensor readings to stabilize
-    delay(100);
-  }
+void RightTurnSequence(){
+  setColor('G');
+  delay(5000);
+  //moveForward(100);
+  //turnright(100);
+  //moveForeward(100);
 }
 
 void FWD() {
-  // Moves the robot forward for a fixed duration to approach the next grid
-  moveForward(timeForward);
+  int targetDistance = 5; // Target distance from the wall in centimeters
+  int wallDistance = 3;
+  int errorMargin = 1; // Allowable error margin in centimeters
+  int errorMarginCorrect = 1; // Allowable error margin in centimeters
+  int turnDistance = 20; // Allowable error margin in centimeters
 
-  // Calls center function to align orientation
-  center();
+  while (true) { // Infinite loop to keep moving forward
+    delay(1000);
+    int distanceRightFront = getSensor("RF");
+    int distanceRightBack = getSensor("RB");
+    int distanceFront = getSensor("F");
+    int averageDistance = (distanceRightFront + distanceRightBack) / 2; // Calculate the average distance to the wall
 
-  // Calls centerFront function to ensure the robot is centered within the grid square
-  centerFront();
+
+    //if (distanceRightFront > turnDistance){
+    //    RightTurnSequence();
+    //    continue;
+    //}
+    
+    if (distanceFront < wallDistance){
+        turnLeft(100);
+        continue;
+    }
+
+    //too close
+    if (distanceRightFront < targetDistance-errorMarginCorrect){
+      turnLeft(100);
+      setColor('B');
+    }
+    if (distanceRightFront > targetDistance+errorMarginCorrect){
+      turnRight(100);
+      setColor('B');
+    }
+    
+    //straight
+    if (abs(distanceRightFront - distanceRightBack) <= errorMargin){
+      moveForward(100);
+    }
+    else if (distanceRightFront > distanceRightBack){
+      turnRight(100);
+      moveForward(100);
+    }
+    else{
+      turnLeft(100);
+      moveForward(100);
+    }
+
+
+  }
 }
 
-void RGHT() {
-  // Moves the robot forward for a fixed duration to approach the next grid
-  turnRight(timeRight);
-
-
-  // Calls centerFront function to ensure the robot is centered within the grid square
-  centerFront();
-}
-
-void CEN(){
-  center();
-  centerFront();
-}
 
 
 void loop() {
-  setMotorSpeed(globalSpeed); // Set global speed
-  moveForward(1000);
-  
-  
-  //int frontDistance = getSensorDistance(trigPinFront, echoPinFront);
-  //Serial.println(frontDistance);
-  //center();
+  // Read distances from each sensor
+  FWD();
+  //TESTSENSORS();
+  // Delay for a bit before reading again to make the output readable
+  //delay(1000); // 1-second delay
+}
+
+
+void TESTSENSORS(){
+  int distanceLeft = getSensor("L");
+  int distanceRightFront = getSensor("RF");
+  int distanceRightBack = getSensor("RB");
+  int distanceFront = getSensor("F");
+
+  // Write the distances to the serial port
+  Serial.print("Left: ");
+  Serial.print(distanceLeft);
+  Serial.print(" cm, Right Front: ");
+  Serial.print(distanceRightFront);
+  Serial.print(" cm, Right Back: ");
+  Serial.print(distanceRightBack);
+  Serial.print(" cm, Front: ");
+  Serial.print(distanceFront);
+  Serial.println(" cm");
+
 }
