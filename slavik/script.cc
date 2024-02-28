@@ -4,8 +4,8 @@
 // Motor control pins
 #define motorPinR1 3
 #define motorPinR2 2
-#define motorPinL1 4
-#define motorPinL2 5
+#define motorPinL1 5
+#define motorPinL2 4
 #define motorSpeedL 6
 #define motorSpeedR 7
 
@@ -26,17 +26,21 @@
 #define GREEN_PIN 52
 #define BLUE_PIN 53
 
+#define liposag 1
+
 
 // Global variables for speed control and sensor centerthresh
 float globalSpeed = 1; // Speed scale from 0 to 1
 #define frontSensorOffset 10 // Example value in centimeters
 #define mazeGridSize 40 // Example value in centimeters, adjust as per your maze
-//#define timeForward 1000 // Example value in milliseconds, adjust based on your robot's speed and grid size
+
+#define timeTurn 500 // Example value in milliseconds, adjust based on your robot's speed and grid size
 
 Servo dropoff;
 
 // Color sensor setup
-Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
+//Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_24MS, TCS34725_GAIN_1X);
 
 void setup() {
   Serial.begin(9600);
@@ -142,8 +146,15 @@ void moveForward(int duration) {
   digitalWrite(motorPinL2, HIGH);
   digitalWrite(motorPinR1, LOW);
   digitalWrite(motorPinR2, HIGH);
-  delay(duration);
+  delay(duration*liposag);
   motorsOff();
+}
+
+void constForward(){
+  digitalWrite(motorPinL1, LOW);
+  digitalWrite(motorPinL2, HIGH);
+  digitalWrite(motorPinR1, LOW);
+  digitalWrite(motorPinR2, HIGH);
 }
 
 void moveBackward(int duration) {
@@ -151,7 +162,7 @@ void moveBackward(int duration) {
   digitalWrite(motorPinL2, LOW);
   digitalWrite(motorPinR1, HIGH);
   digitalWrite(motorPinR2, LOW);
-  delay(duration);
+  delay(duration*liposag);
   motorsOff();
 }
 
@@ -160,7 +171,7 @@ void turnLeft(int duration) {
   digitalWrite(motorPinL2, LOW);
   digitalWrite(motorPinR1, LOW);
   digitalWrite(motorPinR2, HIGH);
-  delay(duration);
+  delay(duration*liposag);
   motorsOff();
 }
 
@@ -169,7 +180,7 @@ void turnRight(int duration) {
   digitalWrite(motorPinL2, HIGH);
   digitalWrite(motorPinR1, HIGH);
   digitalWrite(motorPinR2, LOW);
-  delay(duration);
+  delay(duration*liposag);
   motorsOff();
 }
 
@@ -186,10 +197,11 @@ String detectColor() {
   uint16_t clear, red, green, blue;
   tcs.getRawData(&red, &green, &blue, &clear);
 
-  if (green*2 < red && blue*2 < red) {
-    return "red";
-  } else if (red < 10 && blue < 10 && green < 10) {
+  if (red < 20 && blue < 20 && green < 20) {
     return "black";
+  }
+  else if (green*1.4 < red && blue*1.4 < red) {
+    return "red";
   } else {
     return "none";
   }
@@ -258,42 +270,94 @@ void servodrop(){
   dropoff.write(90);
 }
 
-void tryrightturn(){
-  while(getSensor("RF") > 15 && getSensor("F") > 5){
-    delay(50);
-    if (getSensor("RB") < 15){
-      moveForward(50);
-    }
-    else{
-      turnRight(300);
-      moveForward(300);
+void leftturn(){
+  moveForward(200);
+  int fronttarget = 4;
+  int distanceFront = getSensor("F");
+  int f = 0;
+  while (abs(distanceFront-fronttarget)>0 && f<15){
+    f++;
+    delay(100);
+     distanceFront = getSensor("F");
+
+    if(abs(distanceFront-fronttarget)==0){
       break;
     }
+     
+    if (distanceFront < fronttarget || distanceFront >= 100){
+     moveBackward(50);
+      
+    }
+    else if (distanceFront > fronttarget){
+     moveForward(50);
+      
+    }
+
+    
   }
+  
+     
+     turnLeft(timeTurn);
+     
+    
+    
 }
 
 void FWD() {
-  int targetDistance = 7; // Target distance from the wall in centimeters
-  int wallDistance = 7;
-  int errorMargin = 1; // Allowable error margin in centimeters
-  int errorMarginCorrect = 2; // Allowable error margin in centimeters
+  int targetDistance = 6; // Target distance from the wall in centimeters
+  int wallDistance = 5;
+  int errM = 1;
+  int errorMarginCorrect = 1; // Allowable error margin in centimeters
   long lastmil = 0;
   long lastmil2 = 0;
+  int distmindiff = 5;
+  int currdistdiff = 0;
+  int distdiffi = 0;
+  int lastdistfront = 0;
+  bool constant = false;
 
   while (true) { // Infinite loop to keep moving forward
-    delay(10);
+    
+    if(constant)
+    {
+      delay(50);
+    }
+    else
+    {
+      delay(500);
+    }
+    
     setColor('X');
     int distanceRightFront = getSensor("RF");
     int distanceRightBack = getSensor("RB");
     int distanceFront = getSensor("F");
     int averageDistance = (distanceRightFront + distanceRightBack) / 2; // Calculate the average distance to the wall
 
+
+    distdiffi ++;
+    currdistdiff += abs(distanceFront - lastdistfront);
+    if (distanceFront > 100){
+      currdistdiff = 100;
+    }
+    lastdistfront = distanceFront;
+    if(distdiffi>=5){
+      distdiffi=0;
+      if(currdistdiff < distmindiff){
+        setColor('G');
+        moveBackward(500);
+      }
+      
+      currdistdiff = 0;
+    }
+
     long currentmil = millis();
-    if (currentmil-lastmil2 >= 2000){
-      lastmil2 = currentmil;
+    
+    if (currentmil-lastmil2 >= 200 || constant){
       String col = detectColor();
       if(col =="red"){
-        if (currentmil-lastmil >= 5000){
+        constant = false;
+        moveForward(500);
+        if (currentmil-lastmil >= 7000){
           for (int i = 0; i < 25; i++) {
             setColor('G');
             delay(100);
@@ -301,55 +365,99 @@ void FWD() {
             delay(100);
           }
           servodrop();
-          lastmil = currentmil;
+          lastmil = millis();
         }
       }
 
       if(col =="black"){
-        setColor('C');
-        turnLeft(300);
+        setColor('B');
+        moveBackward(300);
+        turnLeft(timeTurn);
+        constant = false;
       }
-
+      
+      lastmil2 = millis();
 
     }
-    
 
-    if (distanceFront < wallDistance){
-      moveBackward(100);
-      turnLeft(400);
-      continue;
-    }
+    //turn
     //if(getSensor("RF") > 15 && getSensor("F") > 5){
     //  tryrightturn();
     //}
 
-    //too close
-    if (averageDistance < targetDistance-errorMarginCorrect){
-      setColor('B');
-      turnLeft(100);
-      moveForward(50);
-        continue;
-    }
-    //too far
-    if (averageDistance > targetDistance+errorMarginCorrect){
-      setColor('B');
-      moveForward(100);
-      turnRight(50);
-        continue; 
-    }
-    
-      setColor('X');
-    //straight
-    if (abs(distanceRightFront - distanceRightBack) <= errorMargin){
-      moveForward(100);
-    }
-    else if (distanceRightFront > distanceRightBack){
-      turnRight(50);
-    }
-    else{
-      turnLeft(50);
+    //walltouch
+    if (distanceFront < wallDistance){
+      leftturn();
+        constant = false;
+      
+      continue;
     }
 
+    //too far
+    if (distanceRightFront > targetDistance+errorMarginCorrect){// || averageDistance > targetDistance+errorMarginCorrect){
+        constant = false;
+        
+      setColor('G');
+      moveForward(150);
+      delay(50);
+      turnRight(150);
+        continue; 
+    }
+    //too close
+    if (distanceRightFront < targetDistance-errorMarginCorrect){
+        constant = false;
+      setColor('B');
+      turnLeft(100);
+      delay(50);
+      moveForward(100);
+        continue;
+    }
+    
+    
+    
+    
+    //straight
+    if (abs(distanceRightFront - distanceRightBack) <= errM || averageDistance > 15){
+      moveForward(200);
+      constant=false;
+    }
+    else 
+    {
+      int t = 0;
+        constant = false;
+      while(abs(distanceRightFront - distanceRightBack) > 0){
+        t++;
+        
+        distanceRightFront = getSensor("RF");
+        distanceRightBack = getSensor("RB");
+
+
+        if(abs(distanceRightFront - distanceRightBack) <= 0)
+        {
+          break;
+        }
+        
+        if (distanceRightFront > distanceRightBack){
+          turnRight(50);
+        }
+        else if (distanceRightFront < distanceRightBack){
+          turnLeft(50);
+        }
+        
+        
+
+        
+        delay(100);
+
+        if(t >= 15){
+        moveForward(100);
+        break;
+        }
+      }
+    }
+
+
+    
          
   }
 }
@@ -362,7 +470,7 @@ void loop() {
   //Serial.print(detectColor());
   FWD();
   //servodrop();
-  
+   
   delay(5000);
 }
 
