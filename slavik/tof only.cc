@@ -8,10 +8,10 @@ VL53L0X RB;
 VL53L0X B;
 
 // Define the pins connected to the XSHUT (shutdown) pin of each sensor
-const int XSHUT_pin_RF = 2; // Example pin for Right Front sensor
-const int XSHUT_pin_RB = 3; // Example pin for Right Back sensor
-const int XSHUT_pin_F = 4;  // Example pin for Front sensor
-const int XSHUT_pin_B = 5;  // Example pin for Back sensor
+const int XSHUT_pin_RF = 3; // Example pin for Right Front sensor
+const int XSHUT_pin_RB = 2; // Example pin for Right Back sensor
+const int XSHUT_pin_F = 1;  // Example pin for Front sensor
+const int XSHUT_pin_B = 4;  // Example pin for Back sensor
 
 // Define unique I2C addresses for the sensors
 const uint8_t addressRF = 0x30; // Right Front
@@ -19,15 +19,23 @@ const uint8_t addressRB = 0x31; // Right Back
 const uint8_t addressF = 0x32;  // Front
 const uint8_t addressB = 0x33;  // Back
 
-void wakeSensorAndSetAddress(int pin, VL53L0X& sensor, uint8_t newAddress) {
+bool wakeSensorAndSetAddress(int pin, VL53L0X& sensor, uint8_t newAddress) {
   pinMode(pin, OUTPUT);
   digitalWrite(pin, LOW);
   delay(10);
   digitalWrite(pin, HIGH);
   delay(10);
-  sensor.begin();
+  if (!sensor.init()) {
+    Serial.println("Sensor init failed");
+    return false;
+  }
   sensor.setAddress(newAddress);
+  Serial.print("Sensor at pin ");
+  Serial.print(pin);
+  Serial.println(" setup");
+  return true;
 }
+
 
 void setup() {
   Serial.begin(9600);
