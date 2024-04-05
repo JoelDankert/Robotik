@@ -1,13 +1,38 @@
 #include <Adafruit_TCS34725.h>
 #include <Servo.h>
+#include <Wire.h>
+#include <VL53L0X.h>
 
-// Motor control pins
-#define motorPinR1 3
-#define motorPinR2 2
-#define motorPinL1 5
-#define motorPinL2 4
-#define motorSpeedL 6
-#define motorSpeedR 7
+
+VL53L0X F;
+VL53L0X RF;
+VL53L0X RB;
+VL53L0X B;
+
+// Define the pins connected to the XSHUT (shutdown) pin of each sensor
+const int XSHUT_pin_RF = 14; // Example pin for Right Front sensor
+const int XSHUT_pin_RB = 10; // Example pin for Right Back sensor
+const int XSHUT_pin_F = 15;  // Example pin for Front sensor
+const int XSHUT_pin_B = 9;  // Example pin for Back sensor
+
+// Define unique I2C addresses for the sensors
+const uint8_t addressRF = 0x30; // Right Front
+const uint8_t addressRB = 0x31; // Right Back
+const uint8_t addressF = 0x32;  // Front
+const uint8_t addressB = 0x33;  // Back
+
+
+
+#define MOTOR1_DIR 4
+#define MOTOR1_SPEED 3
+#define MOTOR2_DIR 12
+#define MOTOR2_SPEED 11
+#define MOTOR3_DIR 8
+#define MOTOR3_SPEED 5
+#define MOTOR4_DIR 7
+#define MOTOR4_SPEED 6
+
+
 
 // Ultrasonic sensor pins
 #define echoPinFront 23
@@ -42,6 +67,8 @@ int slowSpinRange = 5;
 int slowSpinSpeed = 0.5;
 int lastScanMillis = 0;
 int blackbackdelay = 100;
+int timeBetweenScan = 1000;
+float timeperangle = 6;
 
 Servo dropoff;
 
@@ -53,12 +80,33 @@ void setup() {
 
   //TODO SETUP FIELDSIZE
   Serial.begin(9600);
-  pinMode(motorPinL1, OUTPUT);
-  pinMode(motorPinL2, OUTPUT);
-  pinMode(motorPinR1, OUTPUT);
-  pinMode(motorPinR2, OUTPUT);
-  pinMode(motorSpeedL, OUTPUT);
-  pinMode(motorSpeedR, OUTPUT);
+  Wire.begin();
+
+
+  pinMode(XSHUT_pin_F, OUTPUT);
+  pinMode(XSHUT_pin_RF, OUTPUT);
+  pinMode(XSHUT_pin_RB, OUTPUT);
+  pinMode(XSHUT_pin_B, OUTPUT);
+  digitalWrite(XSHUT_pin_F, LOW);
+  digitalWrite(XSHUT_pin_RF, LOW);
+  digitalWrite(XSHUT_pin_RB, LOW);
+  digitalWrite(XSHUT_pin_B, LOW);
+  delay(10);
+  wakeSensorAndSetAddress(XSHUT_pin_F, F, addressF);
+  wakeSensorAndSetAddress(XSHUT_pin_RF, RF, addressRF);
+  wakeSensorAndSetAddress(XSHUT_pin_RB, RB, addressRB);
+  wakeSensorAndSetAddress(XSHUT_pin_B, B, addressB);
+  
+
+  pinMode(MOTOR1_DIR, OUTPUT);
+  pinMode(MOTOR1_SPEED, OUTPUT);
+  pinMode(MOTOR2_DIR, OUTPUT);
+  pinMode(MOTOR2_SPEED, OUTPUT);
+  pinMode(MOTOR3_DIR, OUTPUT);
+  pinMode(MOTOR3_SPEED, OUTPUT);
+  pinMode(MOTOR4_DIR, OUTPUT);
+  pinMode(MOTOR4_SPEED, OUTPUT);
+
 
   // Initialize ultrasonic sensors
   pinMode(trigPinFront, OUTPUT);
@@ -112,10 +160,15 @@ void setup() {
 }
 
 void loop() {
-  //TESTSENSORS();
+
+
+  //spin(90);
+
+  motorsOff();  
+  TESTSENSORS();
   //printcolors();
   //Serial.print(detectColor());
-  MAIN();
+  //MAIN();
   //servodrop();
 
   delay(5000);
@@ -132,7 +185,7 @@ void MAIN() {
 
     if(detectColor()=="red" && millis()-lastScanMillis > timeBetweenScan){
       lastScanMillis = millis();
-      dropoff();
+      fieldDetect();
     }
     if(detectColor()=="black"){
       setColor('C');
@@ -159,7 +212,7 @@ void MAIN() {
       continue;
     }
     else{
-      moveForward();
+      moveForward(globalSpeed);
       continue;
     }
 
@@ -187,20 +240,20 @@ void RightTurnSequence(){
     {
       i++;
       delay(50);
-      RB = getSensor("RB");
+      int RB = getSensor("RB");
       if (RB>wallDistanceForRightTurnCheck){
-        moveForward();
+        moveForward(globalSpeed);
         delay(backToFullBackDelay);
-        stopMotors();
+        motorsOff();
         spin(90);
         FieldForward();
           
         break;
       }
 
-      moveForward();
+      moveForward(globalSpeed);
     }
-    stopMotors();
+    motorsOff();
 
 }
 void LeftTurnSequence(){
@@ -209,22 +262,22 @@ void LeftTurnSequence(){
 }
 
 void blackDetectSequence(){
-  moveBackward();
+  moveBackward(globalSpeed);
   delay(blackbackdelay);
-  stopMotors();
+  motorsOff();
   spin(-90);
   FieldForward();
 }
 
 void FieldForward(){
   int i = 0;
-  startFront = getSensor("F");
+  int startFront = getSensor("F");
   
   while(i<100){
     i++;
-    currentFront = getSensor("F");
+    int currentFront = getSensor("F");
     if (startFront-fieldSize>currentFront){
-      moveForward();
+      moveForward(globalSpeed);
     }
     else{
       break;
@@ -232,23 +285,24 @@ void FieldForward(){
     delay(20);
   }
 
-  stopMotors();
+  motorsOff();
 }
 
-void AdjustForward(goaldist){
+void AdjustForward(int goaldist){
+  int i = 0;
   while(i<100){
     i++;
-    currentFront = getSensor("F");
+    int currentFront = getSensor("F");
 
-    if (abs(goal-currentFront)<errM){
-      break
+    if (abs(goaldist-currentFront)<errM){
+      break;
     }
     
-    if (goal>currentFront){
-      moveForward();
+    if (goaldist>currentFront){
+      moveForward(globalSpeed);
     }
     else{
-      moveBackward();
+      moveBackward(globalSpeed);
     }
     delay(20);
   }
@@ -301,9 +355,9 @@ void adjustAngleRight() {
 
 
     if (RBack > RFront) {
-      turnLeft();
+      turnLeft(globalSpeed);
     } else {
-      turnRight();
+      turnRight(globalSpeed);
     }
     delay(30);
     motorsOff();
@@ -331,9 +385,9 @@ void adjustDistanceFront(int goaldist) {
 
 
     if (Front > goaldist) {
-      moveForward();
+      moveForward(globalSpeed);
     } else {
-      moveBackward();
+      moveBackward(globalSpeed);
     }
     delay(30);
     motorsOff();
@@ -343,8 +397,25 @@ void adjustDistanceFront(int goaldist) {
   }
 }
 
+void spinNOGYRO(int angle){
+  if (angle > 0){
+    turnRight(globalSpeed);
+    delay(angle*timeperangle);
+  }
+  else{
+    turnLeft(globalSpeed);
+    delay(angle*timeperangle);
+  }
+
+  motorsOff();
+}
+
 void spin(int angle) {
-  currentAngle = getGyroAngle();
+
+  spinNOGYRO(angle); //REMOVE WHEN GYRO
+  return;
+
+  int currentAngle = getGyroAngle();
   
   if (currentAngle < -180)
   {
@@ -355,7 +426,7 @@ void spin(int angle) {
     currentAngle-=360;
   }
   
-  targetAngle = currentAngle + angle;
+  int targetAngle = currentAngle + angle;
 
   if (targetAngle < -180)
   {
@@ -384,7 +455,7 @@ void spin(int angle) {
       }
   
     
-    tospin = targetAngle - currentAngle;
+    int tospin = targetAngle - currentAngle;
 
     // Adjust for circular nature of angles
     if (tospin > 180) {
@@ -404,10 +475,10 @@ void spin(int angle) {
       break;
     }
     if (tospin < 0){
-      turnLeft();
+      turnLeft(globalSpeed);
     }
     if (tospin > 0){
-      turnRight();
+      turnRight(globalSpeed);
     }
     
   }
@@ -419,53 +490,60 @@ void spin(int angle) {
 
 // MOTORFUNCS
 void setMotorSpeed(float speed) {
-  analogWrite(motorSpeedL, speed * 255);
-  analogWrite(motorSpeedR, speed * 255);
-}
-void setMotorSpeedR(float speed) {
-  analogWrite(motorSpeedR, speed * 255);
-}
-void setMotorSpeedL(float speed) {
-  analogWrite(motorSpeedL, speed * 255);
+  int pwmValue = speed * 255;
+  analogWrite(MOTOR1_SPEED, pwmValue);
+  analogWrite(MOTOR2_SPEED, pwmValue);
+  analogWrite(MOTOR3_SPEED, pwmValue);
+  analogWrite(MOTOR4_SPEED, pwmValue);
 }
 
-void moveForward() {
-  digitalWrite(motorPinL1, LOW);
-  digitalWrite(motorPinL2, HIGH);
-  digitalWrite(motorPinR1, LOW);
-  digitalWrite(motorPinR2, HIGH);
+void setMotorSpeed1(float speed) { analogWrite(MOTOR1_SPEED, speed * 255); }
+
+void setMotorSpeed2(float speed) { analogWrite(MOTOR2_SPEED, speed * 255); }
+
+void setMotorSpeed3(float speed) { analogWrite(MOTOR3_SPEED, speed * 255); }
+
+void setMotorSpeed4(float speed) { analogWrite(MOTOR4_SPEED, speed * 255); }
+
+void moveForward(float spd) {
+  setMotorSpeed(spd);
+  digitalWrite(MOTOR1_DIR, LOW);
+  digitalWrite(MOTOR2_DIR, LOW);
+  digitalWrite(MOTOR3_DIR, LOW);
+  digitalWrite(MOTOR4_DIR, HIGH);
 }
 
-void moveBackward() {
-  digitalWrite(motorPinL1, HIGH);
-  digitalWrite(motorPinL2, LOW);
-  digitalWrite(motorPinR1, HIGH);
-  digitalWrite(motorPinR2, LOW);
+void moveBackward(float spd) {
+  setMotorSpeed(spd);
+  digitalWrite(MOTOR1_DIR, HIGH);
+  digitalWrite(MOTOR2_DIR, HIGH);
+  digitalWrite(MOTOR3_DIR, HIGH);
+  digitalWrite(MOTOR4_DIR, LOW);
 }
 
-void turnLeft() {
-  digitalWrite(motorPinL1, HIGH);
-  digitalWrite(motorPinL2, LOW);
-  digitalWrite(motorPinR1, LOW);
-  digitalWrite(motorPinR2, HIGH);
+void turnLeft(float spd) {
+  setMotorSpeed(spd);
+  digitalWrite(MOTOR1_DIR, HIGH);
+  digitalWrite(MOTOR2_DIR, LOW);
+  digitalWrite(MOTOR3_DIR, HIGH);
+  digitalWrite(MOTOR4_DIR, HIGH);
 }
 
-void turnRight() {
-  digitalWrite(motorPinL1, LOW);
-  digitalWrite(motorPinL2, HIGH);
-  digitalWrite(motorPinR1, HIGH);
-  digitalWrite(motorPinR2, LOW);
+void turnRight(float spd) {
+  setMotorSpeed(spd);
+  digitalWrite(MOTOR1_DIR, LOW);
+  digitalWrite(MOTOR2_DIR, HIGH);
+  digitalWrite(MOTOR3_DIR, LOW);
+  digitalWrite(MOTOR4_DIR, LOW);
 }
 
 void motorsOff() {
-  digitalWrite(motorPinL1, LOW);
-  digitalWrite(motorPinL2, LOW);
-  digitalWrite(motorPinR1, LOW);
-  digitalWrite(motorPinR2, LOW);
+  analogWrite(MOTOR1_SPEED, 0);
+  analogWrite(MOTOR2_SPEED, 0);
+  analogWrite(MOTOR3_SPEED, 0);
+  analogWrite(MOTOR4_SPEED, 0);
 }
 
-
-//SENSORFUNCS
 String detectColor() {
   uint16_t clear, red, green, blue;
   tcs.getRawData(&red, &green, &blue, &clear);
@@ -479,43 +557,6 @@ String detectColor() {
   }
 }
 
-int getSensor(String sensor) {
-  int sensorPinTrig, sensorPinEcho;
-  float conversionvalue = 1;
-
-  // Determine which sensor is being requested
-  if (sensor == "L") {
-    sensorPinTrig = trigPinLeft;
-    sensorPinEcho = echoPinLeft;
-  } else if (sensor == "F") {
-    sensorPinTrig = trigPinFront;
-    sensorPinEcho = echoPinFront;
-  } else if (sensor == "RF") {
-    sensorPinTrig = trigPinRightFront;
-    sensorPinEcho = echoPinRightFront;
-  } else if (sensor == "RB") {
-    sensorPinTrig = trigPinRightBack;
-    sensorPinEcho = echoPinRightBack;
-  } else {
-    // If the sensor code is invalid, return -1 indicating an error
-    return -1;
-  }
-
-  // Activate the specified sensor and measure the distance
-  digitalWrite(sensorPinTrig, LOW);
-  delayMicroseconds(2);
-  digitalWrite(sensorPinTrig, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(sensorPinTrig, LOW);
-  long duration = pulseIn(sensorPinEcho, HIGH);
-
-  // Calculate and return the distance
-  if (duration == 0) {
-    // Return a high value to indicate out of range
-    return 1000;
-  }
-  return (duration * 0.034 / 2) * conversionvalue;
-}
 
 int getGyroAngle() {
   return 0;
@@ -525,8 +566,8 @@ int getGyroAngle() {
 //OTHER
 void fieldDetect() {
 
-  setColor('R')
-  delay(5000)
+  setColor('R');
+  delay(5000);
   setColor('X');
   
   dropoff.write(0);
@@ -538,14 +579,12 @@ void fieldDetect() {
   dropoff.write(90);
 }
 
-
-
 //DEBUG
 void TESTSENSORS() {
-  int distanceLeft = getSensor("L");
+  int distanceLeft = getSensor("F");
   int distanceRightFront = getSensor("RF");
   int distanceRightBack = getSensor("RB");
-  int distanceFront = getSensor("F");
+  int distanceFront = getSensor("B");
 
   // Write the distances to the serial port
   Serial.print("Left: ");
@@ -598,3 +637,58 @@ void printcolors() {
   Serial.print(", Blue: ");
   Serial.print(blue);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+bool wakeSensorAndSetAddress(int pin, VL53L0X& sensor, uint8_t newAddress) {
+  digitalWrite(pin, HIGH); // Wake up the sensor
+  delay(100); // Give some time for the sensor to wake up
+  if (!sensor.init()) {
+    Serial.println("Sensor init failed");
+    return false; // Initialization failed
+  }
+  sensor.setAddress(newAddress); // Set the new I2C address
+  Serial.print("Sensor at pin ");
+  Serial.print(pin);
+  Serial.println(" setup");
+  return true; // Initialization and address setting successful
+}
+
+
+int getSensor(String sensorID) {
+  if (sensorID == "F") {
+    return F.readRangeSingleMillimeters();
+  } else if (sensorID == "RF") {
+    return RF.readRangeSingleMillimeters();
+  } else if (sensorID == "RB") {
+    return RB.readRangeSingleMillimeters();
+  } else if (sensorID == "B") {
+    return B.readRangeSingleMillimeters();
+  } else {
+    Serial.println("Invalid sensor ID");
+    return -1; // Indicate an error
+  }
+}
+
+
+
+
+
+
+
+
+
+
