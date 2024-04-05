@@ -4,16 +4,16 @@
 #include <VL53L0X.h>
 
 
-VL53L0X F;
+VL53L0X FF;
 VL53L0X RF;
 VL53L0X RB;
-VL53L0X B;
+VL53L0X BB;
 
 // Define the pins connected to the XSHUT (shutdown) pin of each sensor
-const int XSHUT_pin_RF = 14; // Example pin for Right Front sensor
-const int XSHUT_pin_RB = 10; // Example pin for Right Back sensor
-const int XSHUT_pin_F = 15;  // Example pin for Front sensor
-const int XSHUT_pin_B = 9;  // Example pin for Back sensor
+const int XSHUT_pin_RF = 25; // Example pin for Right Front sensor
+const int XSHUT_pin_RB = 26; // Example pin for Right Back sensor
+const int XSHUT_pin_F = 24;  // Example pin for Front sensor
+const int XSHUT_pin_B = 27;  // Example pin for Back sensor
 
 // Define unique I2C addresses for the sensors
 const uint8_t addressRF = 0x30; // Right Front
@@ -33,16 +33,6 @@ const uint8_t addressB = 0x33;  // Back
 #define MOTOR4_SPEED 6
 
 
-
-// Ultrasonic sensor pins
-#define echoPinFront 23
-#define trigPinFront 22
-#define echoPinLeft 29
-#define trigPinLeft 28
-#define echoPinRightFront 27
-#define trigPinRightFront 26
-#define echoPinRightBack 25
-#define trigPinRightBack 24
 
 #define servopin 9
 #define pinLED 40
@@ -78,10 +68,9 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_24MS, TCS3472
 
 void setup() {
 
-  //TODO SETUP FIELDSIZE
   Serial.begin(9600);
   Wire.begin();
-
+  Wire.setClock(400000); // use 400 kHz I2C
 
   pinMode(XSHUT_pin_F, OUTPUT);
   pinMode(XSHUT_pin_RF, OUTPUT);
@@ -91,11 +80,60 @@ void setup() {
   digitalWrite(XSHUT_pin_RF, LOW);
   digitalWrite(XSHUT_pin_RB, LOW);
   digitalWrite(XSHUT_pin_B, LOW);
-  delay(10);
-  wakeSensorAndSetAddress(XSHUT_pin_F, F, addressF);
-  wakeSensorAndSetAddress(XSHUT_pin_RF, RF, addressRF);
-  wakeSensorAndSetAddress(XSHUT_pin_RB, RB, addressRB);
-  wakeSensorAndSetAddress(XSHUT_pin_B, B, addressB);
+  delay(50);
+  
+
+  delay(50);
+  digitalWrite(XSHUT_pin_F, HIGH);
+  delay(50);
+  FF.setTimeout(500);
+  if (!FF.init()) {
+    Serial.println("Sensor init failed F");
+    
+  }
+  FF.setAddress(addressF);
+  
+  
+  delay(50);
+  digitalWrite(XSHUT_pin_RF, HIGH);
+  delay(50);
+  RF.setTimeout(500);
+  if (!RF.init()) {
+    Serial.println("Sensor init failed RF");
+  }
+  RF.setAddress(addressRF);
+
+
+  delay(50);
+  digitalWrite(XSHUT_pin_RB, HIGH);
+  delay(50);
+  RB.setTimeout(500);
+  if (!RB.init()) {
+    Serial.println("Sensor init failed RB");
+  }
+  RB.setAddress(addressRB);
+
+
+  delay(50);
+  digitalWrite(XSHUT_pin_B, HIGH);
+  delay(50);
+  BB.setTimeout(500);
+  if (!BB.init()) {
+    Serial.println("Sensor init failed B");
+  }
+  BB.setAddress(addressB);
+
+
+
+
+
+
+
+
+
+
+
+  
   
 
   pinMode(MOTOR1_DIR, OUTPUT);
@@ -108,15 +146,6 @@ void setup() {
   pinMode(MOTOR4_SPEED, OUTPUT);
 
 
-  // Initialize ultrasonic sensors
-  pinMode(trigPinFront, OUTPUT);
-  pinMode(echoPinFront, INPUT);
-  pinMode(trigPinLeft, OUTPUT);
-  pinMode(echoPinLeft, INPUT);
-  pinMode(trigPinRightFront, OUTPUT);
-  pinMode(echoPinRightFront, INPUT);
-  pinMode(trigPinRightBack, OUTPUT);
-  pinMode(echoPinRightBack, INPUT);
   pinMode(RED_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
   pinMode(BLUE_PIN, OUTPUT);
@@ -138,29 +167,28 @@ void setup() {
 
   setColor('G');
   delay(100);
-  setColor('B');
+  setColor('BB');
   delay(100);
   setColor('G');
   delay(100);
-  setColor('B');
+  setColor('BB');
   delay(100);
   setColor('G');
   delay(100);
-  setColor('B');
+  setColor('BB');
   delay(100);
   setColor('G');
   delay(100);
-  setColor('B');
+  setColor('BB');
   delay(100);
   setColor('G');
   delay(100);
-  setColor('B');
+  setColor('BB');
   delay(100);
   setColor('X');
 }
 
 void loop() {
-
 
   //spin(90);
 
@@ -180,7 +208,7 @@ void MAIN() {
     delay(100);
     int RightFront = getSensor("RF");
     int RightBack = getSensor("RF");
-    int Front = getSensor("F");
+    int Front = getSensor("FF");
 
 
     if(detectColor()=="red" && millis()-lastScanMillis > timeBetweenScan){
@@ -271,11 +299,11 @@ void blackDetectSequence(){
 
 void FieldForward(){
   int i = 0;
-  int startFront = getSensor("F");
+  int startFront = getSensor("FF");
   
   while(i<100){
     i++;
-    int currentFront = getSensor("F");
+    int currentFront = getSensor("FF");
     if (startFront-fieldSize>currentFront){
       moveForward(globalSpeed);
     }
@@ -292,7 +320,7 @@ void AdjustForward(int goaldist){
   int i = 0;
   while(i<100){
     i++;
-    int currentFront = getSensor("F");
+    int currentFront = getSensor("FF");
 
     if (abs(goaldist-currentFront)<errM){
       break;
@@ -308,15 +336,15 @@ void AdjustForward(int goaldist){
   }
 }
 
-bool doRightTurn(int RF, int RB, int F){
+bool doRightTurn(int RF, int RB, int FF){
   if (RF > wallDistanceForRightTurnCheck){
     return true;
   }
   return false;
 }
 
-bool doLeftTurn(int F){
-  if (F < wallDistanceForLeftTurnCheck){
+bool doLeftTurn(int FF){
+  if (FF < wallDistanceForLeftTurnCheck){
     return true;
   }
   return false;
@@ -375,7 +403,7 @@ void adjustDistanceRight() {
 
 void adjustDistanceFront(int goaldist) {
   int i = 0;
-  int Front = getSensor("F");
+  int Front = getSensor("FF");
   while (i < 30) {
     i++;
 
@@ -393,7 +421,7 @@ void adjustDistanceFront(int goaldist) {
     motorsOff();
 
     delay(100);
-    Front = getSensor("F");
+    Front = getSensor("FF");
   }
 }
 
@@ -581,10 +609,10 @@ void fieldDetect() {
 
 //DEBUG
 void TESTSENSORS() {
-  int distanceLeft = getSensor("F");
+  int distanceLeft = getSensor("FF");
   int distanceRightFront = getSensor("RF");
   int distanceRightBack = getSensor("RB");
-  int distanceFront = getSensor("B");
+  int distanceFront = getSensor("BB");
 
   // Write the distances to the serial port
   Serial.print("Left: ");
@@ -614,7 +642,7 @@ void setColor(char color) {
     case 'G':
       digitalWrite(GREEN_PIN, HIGH);
       break;
-    case 'B':
+    case 'BB':
       digitalWrite(BLUE_PIN, HIGH);
       break;
     case 'C':
@@ -622,7 +650,7 @@ void setColor(char color) {
       digitalWrite(GREEN_PIN, HIGH);
       break;
     default:
-      // If the input is not R, G, or B, do nothing (all LEDs remain off)
+      // If the input is not R, G, or BB, do nothing (all LEDs remain off)
       break;
   }
 }
@@ -642,53 +670,18 @@ void printcolors() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-bool wakeSensorAndSetAddress(int pin, VL53L0X& sensor, uint8_t newAddress) {
-  digitalWrite(pin, HIGH); // Wake up the sensor
-  delay(100); // Give some time for the sensor to wake up
-  if (!sensor.init()) {
-    Serial.println("Sensor init failed");
-    return false; // Initialization failed
-  }
-  sensor.setAddress(newAddress); // Set the new I2C address
-  Serial.print("Sensor at pin ");
-  Serial.print(pin);
-  Serial.println(" setup");
-  return true; // Initialization and address setting successful
-}
-
-
 int getSensor(String sensorID) {
-  if (sensorID == "F") {
-    return F.readRangeSingleMillimeters();
+  if (sensorID == "FF") {
+    return FF.readRangeSingleMillimeters();
   } else if (sensorID == "RF") {
     return RF.readRangeSingleMillimeters();
   } else if (sensorID == "RB") {
     return RB.readRangeSingleMillimeters();
-  } else if (sensorID == "B") {
-    return B.readRangeSingleMillimeters();
+  } else if (sensorID == "BB") {
+    return BB.readRangeSingleMillimeters();
   } else {
     Serial.println("Invalid sensor ID");
     return -1; // Indicate an error
   }
 }
-
-
-
-
-
-
-
-
-
 
