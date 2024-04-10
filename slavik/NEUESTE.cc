@@ -21,6 +21,11 @@ const uint8_t addressRB = 0x31; // Right Back
 const uint8_t addressF = 0x32;  // Front
 const uint8_t addressB = 0x33;  // Back
 
+const int Foffset = 0;
+const int RBoffset = 0;
+const int RFoffset = 0;
+const int Boffset = 0;
+
 
 
 #define MOTOR1_DIR 4
@@ -70,7 +75,6 @@ void setup() {
 
   Serial.begin(9600);
   Wire.begin();
-  Wire.setClock(400000); // use 400 kHz I2C
 
   pinMode(XSHUT_pin_F, OUTPUT);
   pinMode(XSHUT_pin_RF, OUTPUT);
@@ -87,7 +91,7 @@ void setup() {
   digitalWrite(XSHUT_pin_F, HIGH);
   delay(50);
   FF.setTimeout(500);
-  if (!FF.init()) {
+  if (!FF.init(true)) {
     Serial.println("Sensor init failed F");
     
   }
@@ -167,23 +171,23 @@ void setup() {
 
   setColor('G');
   delay(100);
-  setColor('BB');
+  setColor('B');
   delay(100);
   setColor('G');
   delay(100);
-  setColor('BB');
+  setColor('B');
   delay(100);
   setColor('G');
   delay(100);
-  setColor('BB');
+  setColor('B');
   delay(100);
   setColor('G');
   delay(100);
-  setColor('BB');
+  setColor('B');
   delay(100);
   setColor('G');
   delay(100);
-  setColor('BB');
+  setColor('B');
   delay(100);
   setColor('X');
 }
@@ -193,10 +197,10 @@ void loop() {
   //spin(90);
 
   motorsOff();  
-  TESTSENSORS();
+  //TESTSENSORS();
   //printcolors();
   //Serial.print(detectColor());
-  //MAIN();
+  MAIN();
   //servodrop();
 
   delay(5000);
@@ -642,7 +646,7 @@ void setColor(char color) {
     case 'G':
       digitalWrite(GREEN_PIN, HIGH);
       break;
-    case 'BB':
+    case 'B':
       digitalWrite(BLUE_PIN, HIGH);
       break;
     case 'C':
@@ -672,16 +676,15 @@ void printcolors() {
 
 int getSensor(String sensorID) {
   if (sensorID == "FF") {
-    return FF.readRangeSingleMillimeters();
+    return FF.readRangeSingleMillimeters()+Foffset;
   } else if (sensorID == "RF") {
-    return RF.readRangeSingleMillimeters();
+    return RF.readRangeSingleMillimeters()+RFoffset;
   } else if (sensorID == "RB") {
-    return RB.readRangeSingleMillimeters();
+    return RB.readRangeSingleMillimeters()+RBoffset;
   } else if (sensorID == "BB") {
-    return BB.readRangeSingleMillimeters();
+    return BB.readRangeSingleMillimeters()+Boffset;
   } else {
     Serial.println("Invalid sensor ID");
     return -1; // Indicate an error
   }
 }
-
