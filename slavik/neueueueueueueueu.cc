@@ -27,7 +27,6 @@ const int RFoffset = -1;
 const int Boffset = -4;
 
 
-
 #define MOTOR1_DIR 4
 #define MOTOR1_SPEED 3
 #define MOTOR2_DIR 12
@@ -54,12 +53,29 @@ float globalSpeed = 1;
 int fieldSize = 30;
 float timeperangle = 6;
 
+
+const float Frightturn = 0.1;
+const float Fleftturnspeed = 0.5;
+
+
+int state = 0;
+float EDcurrentchange = 10;
+float EDresetvalue = 10;
+int EDlaststate = 0;
+float EDcap = 3;
+
+
+
 Servo dropoff;
 
 // Color sensor setup
 //Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_24MS, TCS34725_GAIN_1X);
 
+
+
+
+                                                                                                            //SETUP
 void setup() {
 
   Serial.begin(9600);
@@ -116,17 +132,6 @@ void setup() {
   }
   BB.setAddress(addressB);
 
-
-
-
-
-
-
-
-
-
-
-  
   
 
   pinMode(MOTOR1_DIR, OUTPUT);
@@ -200,17 +205,39 @@ void loop() {
 void MAIN() {
   while(true){
     delay(50);
-    setColor('X');
+
+
+                                                                                                            //COLOR LED
+    if (state = 0){
+      setColor('X');
+    }
+    else if (state = 1){
+      setColor('G');
+    }
+    else if (state = 2){
+      setColor('B');
+    }
+    else if (state = 3){
+      setColor('R');
+    }
+
+
+                                                                                                            //LEFT TURNS (#LT)
     int spd = 1;
     int front = getSensor("FF");
     int i = 0;
     while(front < frontWallDistanceGoal && i < 30){
       i++;
-      turnLeft(0.5);
-      setColor('R');
+      turnLeft(Fleftturnspeed);
+      state = 3;
       delay(20);
       front = getSensor("FF");
     }
+
+
+
+
+                                                                                                            //RIGHT WALL COMPENSATION (#WC)
     int rightF = getSensor("RF");
     int rightB = getSensor("RB");
 
@@ -218,32 +245,68 @@ void MAIN() {
     if (rightF < tryWallDistanceGoal && rightB < tryWallDistanceGoal){
       
       moveForward(1);
-      setColor('G');
+      state = 1;
+      int spdC = max(min(   (abs(diff))/5   ,1),0.2);
       if (diff > 0){
-        setMotorSpeedR(0.5);
+        setMotorSpeedR(spdC);
       }
       else{
-        setMotorSpeedL(0.5);
+        setMotorSpeedL(spdC);
       }
       delay(50);
     }
     
 
+                                                                                                            //RIGHT TURNS (#RT)
     rightF = getSensor("RF");
-    rightB = getSensor("RB");
-
+    //rightB = getSensor("RB");
     
     if (rightF > rightWallDistanceMax){
-      setColor('B');
+      state = 2;
       moveForward(1);
-      setMotorSpeedR(0.1);
+      setMotorSpeedR(Frightturn);
     }
+
+    
+    if (errordetecttick(front)){
+      
+    }
+
+
+
     
   }
 }
 
 
-// MOTORFUNCS
+
+
+bool errordetecttick(int front){                                                                            //ERROR DETECT (#ED)
+
+  float absolutechange = abs(front-EDlast);
+  EDcurrentchange = (EDcurrentchange*EDchangeslow + absolutechange)/(EDchangeslow+1);
+
+
+  if (EDcurrentchange <= EDcap){
+    EDcurrentchange = EDresetvalue;
+    return true;
+  }
+ 
+  EDlast = front;
+
+  
+  return false;
+}
+
+
+
+
+
+
+
+
+
+                                                                                                            //MOTORFUNCS
 void setMotorSpeed(float speed) {
   int pwmValue = speed * 255;
   analogWrite(MOTOR1_SPEED, pwmValue);
@@ -298,6 +361,7 @@ void motorsOff() {
   analogWrite(MOTOR4_SPEED, 0);
 }
 
+                                                                                                            //COLOR DETECTION (#CD)
 String detectColor() {
   uint16_t clear, red, green, blue;
   tcs.getRawData(&red, &green, &blue, &clear);
@@ -312,12 +376,7 @@ String detectColor() {
 }
 
 
-int getGyroAngle() {
-  return 0;
-}
-
-
-//OTHER
+                                                                                                            //DROPOFF SYSTEM (#DO)
 void fieldDetect() {
 
   setColor('R');
@@ -333,7 +392,7 @@ void fieldDetect() {
   dropoff.write(90);
 }
 
-//DEBUG
+                                                                                                            //DEBUG
 void TESTSENSORS() {
   int distanceFront = getSensor("FF");
   int distanceRightFront = getSensor("RF");
@@ -395,6 +454,7 @@ void printcolors() {
 
 
 
+                                                                                                            //TOFS
 
 int getSensor(String sensorID) {
   if (sensorID == "FF") {
