@@ -46,12 +46,14 @@ const int Boffset = -4;
 #define BLUE_PIN 53
 
 int rightWallDistanceMax = 10;
+int rightWallDistanceAdj = 8;
 int frontWallDistanceMin = 10;
-int frontWallDistanceGoal = 10;
+int frontWallDistanceGoal = 15;
 int tryWallDistanceGoal = 10;
 float globalSpeed = 1;
 int fieldSize = 30;
 float timeperangle = 6;
+float speedAdj = 0.2;
 
 
 const float Frightturn = 0.1;
@@ -61,9 +63,9 @@ const float Fleftturnspeed = 0.5;
 int state = 0;
 float EDcurrentchange = 10;
 float EDresetvalue = 10;
-int EDlaststate = 0;
+int EDlast = 0;
 float EDcap = 3;
-
+float EDchangeslow = 5;
 
 
 Servo dropoff;
@@ -81,6 +83,9 @@ void setup() {
   Serial.begin(9600);
   Wire.begin();
 
+  Serial.println("START");
+
+  
   pinMode(XSHUT_pin_F, OUTPUT);
   pinMode(XSHUT_pin_RF, OUTPUT);
   pinMode(XSHUT_pin_RB, OUTPUT);
@@ -97,7 +102,7 @@ void setup() {
   delay(50);
   FF.setTimeout(500);
   if (!FF.init(true)) {
-    Serial.println("Sensor init failed F");
+    Serial.println("F Sensor init failed");
     
   }
   FF.setAddress(addressF);
@@ -108,7 +113,7 @@ void setup() {
   delay(50);
   RF.setTimeout(500);
   if (!RF.init()) {
-    Serial.println("Sensor init failed RF");
+    Serial.println("RF Sensor init failed");
   }
   RF.setAddress(addressRF);
 
@@ -118,7 +123,7 @@ void setup() {
   delay(50);
   RB.setTimeout(500);
   if (!RB.init()) {
-    Serial.println("Sensor init failed RB");
+    Serial.println("RB Sensor init failed");
   }
   RB.setAddress(addressRB);
 
@@ -128,7 +133,7 @@ void setup() {
   delay(50);
   BB.setTimeout(500);
   if (!BB.init()) {
-    Serial.println("Sensor init failed B");
+    Serial.println("B Sensor init failed");
   }
   BB.setAddress(addressB);
 
@@ -199,7 +204,7 @@ void loop() {
   
   //servodrop();
 
-  delay(5000);
+  delay(1000);
 }
 
 void MAIN() {
@@ -207,20 +212,20 @@ void MAIN() {
     delay(50);
 
 
-                                                                                                            //COLOR LED
-    if (state = 0){
+    Serial.println(state);                                                                                              //COLOR LED
+    if (state == 0){
       setColor('X');
     }
-    else if (state = 1){
+    else if (state == 1){
       setColor('G');
     }
-    else if (state = 2){
+    else if (state == 2){
       setColor('B');
     }
-    else if (state = 3){
+    else if (state == 3){
       setColor('R');
     }
-
+    state = -1;
 
                                                                                                             //LEFT TURNS (#LT)
     int spd = 1;
@@ -229,8 +234,9 @@ void MAIN() {
     while(front < frontWallDistanceGoal && i < 30){
       i++;
       turnLeft(Fleftturnspeed);
-      state = 3;
-      delay(20);
+      if (state == -1){ state = 3; }
+      
+      delay(10);
       front = getSensor("FF");
     }
 
@@ -238,31 +244,40 @@ void MAIN() {
 
 
                                                                                                             //RIGHT WALL COMPENSATION (#WC)
-    int rightF = getSensor("RF");
-    int rightB = getSensor("RB");
+    float rightF = getSensor("RF");
+    float rightB = getSensor("RB");
 
-    int diff = rightF-rightB;
-    if (rightF < tryWallDistanceGoal && rightB < tryWallDistanceGoal){
-      
+    float diff = rightF-rightB;
+    if (rightF <= tryWallDistanceGoal && rightB <= tryWallDistanceGoal){
       moveForward(1);
-      state = 1;
-      int spdC = max(min(   (abs(diff))/5   ,1),0.2);
+      if (state == -1){ state = 1; }
+      float compamount = max(min(   (abs(diff)/3   )   ,1),0.2);
+      float spdC = -0.8*compamount +1.2;
       if (diff > 0){
         setMotorSpeedR(spdC);
       }
       else{
+      
         setMotorSpeedL(spdC);
+
+        if (rightF > rightWallDistanceAdj){
+          setMotorSpeedL(speedAdj);
+        }
+        
       }
-      delay(50);
+
+      
+
+      
     }
     
 
                                                                                                             //RIGHT TURNS (#RT)
     rightF = getSensor("RF");
     //rightB = getSensor("RB");
-    
+     
     if (rightF > rightWallDistanceMax){
-      state = 2;
+      if (state == -1){ state = 2; }
       moveForward(1);
       setMotorSpeedR(Frightturn);
     }
@@ -456,17 +471,36 @@ void printcolors() {
 
                                                                                                             //TOFS
 
-int getSensor(String sensorID) {
+float getSensor(String sensorID) {
   if (sensorID == "FF") {
-    return FF.readRangeSingleMillimeters()/10+Foffset;
+    int v = FF.readRangeSingleMillimeters();
+    if(v > 1000){
+      return 0;
+    }
+    return v/10+Foffset;
   } else if (sensorID == "RF") {
-    return RF.readRangeSingleMillimeters()/10+RFoffset;
+    int v = RF.readRangeSingleMillimeters();
+    if(v > 1000){
+      return 0;
+    }
+    return v/10+RFoffset;
   } else if (sensorID == "RB") {
-    return RB.readRangeSingleMillimeters()/10+RBoffset;
+    int v = RB.readRangeSingleMillimeters();
+    if(v > 1000){
+      return 0;
+    }
+    return v/10+RBoffset;
   } else if (sensorID == "BB") {
+    int v = BB.readRangeSingleMillimeters();
+    if(v > 1000){
+      return 0;
+    }
+    return v/10+Boffset;
     return BB.readRangeSingleMillimeters()/10+Boffset;
   } else {
     Serial.println("Invalid sensor ID");
     return -1; // Indicate an error
   }
 }
+
+
