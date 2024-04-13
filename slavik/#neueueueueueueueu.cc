@@ -36,6 +36,10 @@ const int Boffset = -4;
 #define MOTOR4_DIR 7
 #define MOTOR4_SPEED 6
 
+#define redPin 29    // Pin connected to the red signal from the Nano
+#define blackPin 30  // Pin connected to the black signal from the Nano
+#define resetPin 31  // Output pin to send reset signal to the Nano
+
 
 
 #define servopin 9
@@ -70,9 +74,6 @@ float EDchangeslow = 5;
 
 Servo dropoff;
 
-// Color sensor setup
-//Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
-Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_24MS, TCS34725_GAIN_1X);
 
 
 
@@ -158,10 +159,10 @@ void setup() {
 
   setColor('X');
 
-  // Initialize color sensor
-  if (!tcs.begin()) {
-    Serial.println("Couldn't find color sensor");
-  }
+  pinMode(redPin, INPUT);
+  pinMode(blackPin, INPUT);
+  pinMode(resetPin, OUTPUT);
+  digitalWrite(resetPin, HIGH);
 
   dropoff.attach(servopin);  // Attaches the servo on pin 9 to the servo object
   dropoff.write(90);         // Make sure the servo is at position 0 degrees
@@ -197,7 +198,6 @@ void loop() {
 
   //motorsOff();  
   //TESTSENSORS();
-  //printcolors();
   //Serial.print(detectColor());
   MAIN();
   
@@ -210,8 +210,6 @@ void loop() {
 void MAIN() {
   while(true){
     delay(50);
-
-
     Serial.println(state);                                                                                              //COLOR LED
     if (state == 0){
       setColor('X');
@@ -227,6 +225,22 @@ void MAIN() {
     }
     state = -1;
 
+
+
+                                                                                                                  //COLOR DETECTION ACTIONS (#CD)
+    if (detectColor() == "red"){
+      fieldDetect();
+    }
+
+    if (detectColor() == "black"){
+      turnLeft(1);
+      delay(200);
+      motorsOff();
+    }
+
+
+
+
                                                                                                             //LEFT TURNS (#LT)
     int spd = 1;
     int front = getSensor("FF");
@@ -234,7 +248,7 @@ void MAIN() {
     while(front < frontWallDistanceGoal && i < 30){
       i++;
       turnLeft(Fleftturnspeed);
-      if (state == -1){ state = 3; }
+      if (state == -1){ state = 3; setColor('R');}
       
       delay(10);
       front = getSensor("FF");
@@ -250,7 +264,7 @@ void MAIN() {
     float diff = rightF-rightB;
     if (rightF <= tryWallDistanceGoal && rightB <= tryWallDistanceGoal){
       moveForward(1);
-      if (state == -1){ state = 1; }
+      if (state == -1){ state = 1; setColor('G');}
       float compamount = max(min(   (abs(diff)/3   )   ,1),0.2);
       float spdC = -0.8*compamount +1.2;
       if (diff > 0){
@@ -277,7 +291,7 @@ void MAIN() {
     //rightB = getSensor("RB");
      
     if (rightF > rightWallDistanceMax){
-      if (state == -1){ state = 2; }
+      if (state == -1){ state = 2; setColor('B');}
       moveForward(1);
       setMotorSpeedR(Frightturn);
     }
@@ -378,18 +392,27 @@ void motorsOff() {
 
                                                                                                             //COLOR DETECTION (#CD)
 String detectColor() {
-  uint16_t clear, red, green, blue;
-  tcs.getRawData(&red, &green, &blue, &clear);
+  bool redSignal = digitalRead(redPin) == HIGH;
+  bool blackSignal = digitalRead(blackPin) == HIGH;
 
-  if (red < 20 && blue < 20 && green < 20) {
-    return "black";
-  } else if (green * 1.4 < red && blue * 1.4 < red) {
-    return "red";
-  } else {
-    return "none";
+  if (redSignal && !blackSignal) {
+    resetSignal();
+    return "Red";
+  } else if (blackSignal && !redSignal) {
+    resetSignal();
+    return "Black";
+  } else if (blackSignal && redSignal){
+    resetSignal();
+    return "Both";
   }
+  return "none";  // No color detected
 }
 
+void resetSignal() {
+  digitalWrite(resetPin, LOW);  // Send a low signal to reset
+  delay(100);                    // Hold the signal for 100 milliseconds
+  digitalWrite(resetPin, HIGH);  // Return to high
+}
 
                                                                                                             //DROPOFF SYSTEM (#DO)
 void fieldDetect() {
@@ -425,7 +448,7 @@ void TESTSENSORS() {
   Serial.print(distanceBack);
   Serial.println(" cm");
 
-  printcolors();
+
 }
 
 void setColor(char color) {
@@ -455,16 +478,6 @@ void setColor(char color) {
   }
 }
 
-void printcolors() {
-  uint16_t clear, red, green, blue;
-  tcs.getRawData(&red, &green, &blue, &clear);
-  Serial.print("Red: ");
-  Serial.print(red);
-  Serial.print(", Green: ");
-  Serial.print(green);
-  Serial.print(", Blue: ");
-  Serial.print(blue);
-}
 
 
 
@@ -502,5 +515,4 @@ float getSensor(String sensorID) {
     return -1; // Indicate an error
   }
 }
-
 
