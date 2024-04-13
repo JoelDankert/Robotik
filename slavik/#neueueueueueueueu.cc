@@ -53,10 +53,9 @@ void(* resetFunc) (void) = 0;
 
 
 int rightWallDistanceMax = 10;
-int frontWallDistanceMin = 10;
 int frontWallDistanceGoal = 15;
 int tryWallDistanceGoal = 15;
-int rightWallDistanceGoal = 6;
+int rightWallDistanceGoal = 8;
 
 float globalSpeed = 1;
 int fieldSize = 30;
@@ -67,17 +66,17 @@ float speedAdj = 0.2;
 int rightturncancel = 15;
 
 
-const float Frightturn = 0.2;
+const float Frightturn = 0.1;
 const float Fleftturnspeed = 1;
 
 
 
 
 int state = 0;
-float EDcurrentchange = 10;
+float EDcurrentchange = 30;
 float EDresetvalue = 30;
 int EDlast = 0;
-float EDcap = 5;
+float EDcap = 3;
 float EDchangeslow = 10;
 
 int fatalerrorcount = 0;
@@ -86,7 +85,14 @@ int fatalerrorreset = 100;
 
 
 float lastFront = 0;
-float frontmax = 3;
+float frontmax = 2;
+
+
+//forblinktick
+unsigned long previousMillis = 0;  // will store last time LED was updated
+const long onTime = 25;           // milliseconds of on-time
+const long offTime = 100;          // milliseconds of off-time
+bool ledState = false;
 
 
 Servo dropoff;
@@ -95,8 +101,7 @@ Servo dropoff;
 
 
 
-                                                                                                            //SETUP
-void setup() {
+void setup() {                                                                                              //SETUP
 
 
   Serial.begin(9600);
@@ -198,25 +203,20 @@ void loop() {
 
 void MAIN() {
   while(true){
-    delay(10);                                                                                            //COLOR LED
-    if (state == 0){
+    delay(10);
+
+    if (state == 0 || state == -1){                                                                                            //RESETLED
       setColor('X');
-    }
-    else if (state == 1){
-      setColor('G');
-    }
-    else if (state == 2){
-      setColor('B');
-    }
-    else if (state == 3){
-      setColor('R');
     }
     state = -1;
 
 
 
+
+
+
     String det = "";
-    det = detectColor();                                                                                                              //COLOR DETECTION ACTIONS (#CD)
+    det = detectColor();                                                                                                           //COLOR DETECTION ACTIONS (#CD)
     if (det == "Red"){
       fieldDetect();
     }
@@ -228,23 +228,31 @@ void MAIN() {
 
 
 
-
-                                                                                                            //LEFT TURNS (#LT)
-    int spd = 1;
+    int spd = 1;                                                                                                                    //LEFT TURNS (#LT)
     int front = getSensor("FF");
+    float rightF = getSensor("RF");
+    float rightB = getSensor("RB");
+
+    if (errordetecttick(front)){                                                                                                    //COLORDETECTTICK (#CDT)
+      moveBackward(1);
+      setColor('W');
+      delay(500);
+      motorsOff();
+    }
+
     int i = 0;
     while(front < frontWallDistanceGoal && i < 30){
       i++;
       turnLeft(Fleftturnspeed);
-      if (state == -1){ state = 3; setColor('R');}
+      if (state == -1){ state = 3; setColor('Y');}
 
       bool skip = false;
-      if (front > lastFront+frontmax){
-        setColor('G');
+      if (front > lastFront+frontmax){                                                                                             //Suboptimal Left Turn Quantification Compensator
+        setColor('W');
         moveBackward(1);
-        delay(200);
+        delay(100);
         turnLeft(Fleftturnspeed);
-        delay(300);
+        delay(200);
         skip = true;
       }
       delay(20);
@@ -264,13 +272,33 @@ void MAIN() {
         motorsOff();
       }
     }
+    if (state!=-1){
+      continue;
+    }
 
 
 
+     
+                                                                                                                                            //RIGHT TURNS (#RT)
 
-                                                                                                            //RIGHT WALL COMPENSATION (#WC)
-    float rightF = getSensor("RF");
-    float rightB = getSensor("RB");
+    
+     
+    if (rightF > rightWallDistanceMax){
+      if (state == -1){ state = 2; setColor('Y');}
+      if(front < rightturncancel){
+        
+      }
+      else{
+        moveForward(1);
+        setMotorSpeedR(Frightturn);
+      }
+    }
+    if (state!=-1){
+      continue;
+    }
+
+                                                                                                      //Exponential Wall-Alignment Righting Mechanism EWARM (#WC)
+    
 
     float distadj = (rightF - rightWallDistanceGoal)*0.7;
 
@@ -281,6 +309,9 @@ void MAIN() {
 
       float compamount = max(min(   (pow(abs(diff),2)*0.1)   ,1),0);
       float spdC = -1*compamount +1;
+      if (compamount < 0.3){
+        BLINKontrack();
+      }
 
       if (diff > 0){
         setMotorSpeedR(spdC);
@@ -288,26 +319,18 @@ void MAIN() {
       else{
         setMotorSpeedL(spdC);
       }
-
-      
-
       
     }
-    
+    if (state!=-1){
+      continue;
+    }
 
-                                                                                                            //RIGHT TURNS (#RT)
-    rightF = getSensor("RF");
-    front = getSensor("FF");
-     
-    if (rightF > rightWallDistanceMax){
-      if (state == -1){ state = 2; setColor('B');}
-      if(front < rightturncancel){
-        setColor('R');
-      }
-      else{
-        moveForward(1);
-        setMotorSpeedR(Frightturn);
-      }
+
+
+
+
+    if (state == -1){
+      moveForward(1);
     }
 
 
@@ -315,11 +338,7 @@ void MAIN() {
 
 
     
-    if (errordetecttick(front)){
-      moveBackward(1);
-      delay(500);
-      motorsOff();
-    }
+    
 
 
 
@@ -328,9 +347,7 @@ void MAIN() {
 }
 
 
-
-
-bool errordetecttick(int front){                                                                            //ERROR DETECT (#ED)
+bool errordetecttick(int front){                                                                            //Progressive Stasis Error Detection PSED (#ED)
 
 
 
@@ -353,25 +370,17 @@ bool errordetecttick(int front){                                                
 }
 
 
-
-
-
-
-
-
-
-                                                                                                            //MOTORFUNCS
-void setMotorSpeed(float speed) {
-  int pwmValue = speed * 255;
+void setMotorSpeed(float speed) {                                                                                      //MOTORFUNCS
+  int pwmValue = speed * 255 * globalSpeed;
   analogWrite(MOTOR1_SPEED, pwmValue);
   analogWrite(MOTOR2_SPEED, pwmValue);
   analogWrite(MOTOR3_SPEED, pwmValue);
   analogWrite(MOTOR4_SPEED, pwmValue);
 }
 
-void setMotorSpeedL(float speed) { analogWrite(MOTOR1_SPEED, speed * 255); analogWrite(MOTOR3_SPEED, speed * 255);}
+void setMotorSpeedL(float speed) { analogWrite(MOTOR1_SPEED, speed * 255 * globalSpeed); analogWrite(MOTOR3_SPEED, speed * 255 * globalSpeed);}
 
-void setMotorSpeedR(float speed) { analogWrite(MOTOR2_SPEED, speed * 255); analogWrite(MOTOR4_SPEED, speed * 255);}
+void setMotorSpeedR(float speed) { analogWrite(MOTOR2_SPEED, speed * 255 * globalSpeed); analogWrite(MOTOR4_SPEED, speed * 255 * globalSpeed);}
 
 void moveForward(float spd) {
   if (spd != -1){
@@ -415,8 +424,7 @@ void motorsOff() {
   analogWrite(MOTOR4_SPEED, 0);
 }
 
-                                                                                                            //COLOR DETECTION (#CD)
-String detectColor() {
+String detectColor() {                                                                //COLOR DETECTION (#CD)
   return "none";
 
   bool redSignal = digitalRead(redPin) == HIGH;
@@ -442,8 +450,7 @@ void resetSignal() {
   digitalWrite(resetPin, HIGH);  // Return to high
 }
 
-                                                                                                            //DROPOFF SYSTEM (#DO)
-void fieldDetect() {
+void fieldDetect() {                                                                          //DROPOFF SYSTEM (#DO)
 
   setColor('R');
   delay(5000);
@@ -458,8 +465,7 @@ void fieldDetect() {
   dropoff.write(90); 
 }
 
-                                                                                                            //DEBUG
-void TESTSENSORS() {
+void TESTSENSORS() {                                                                                                      //DEBUG
   int distanceFront = getSensor("FF");
   int distanceRightFront = getSensor("RF");
   int distanceRightBack = getSensor("RB");
@@ -480,39 +486,68 @@ void TESTSENSORS() {
 }
 
 void setColor(char color) {
-  // Turn all LEDs off initially
-  digitalWrite(RED_PIN, LOW);
-  digitalWrite(GREEN_PIN, LOW);
-  digitalWrite(BLUE_PIN, LOW);
+    // Turn all LEDs off initially
+    digitalWrite(RED_PIN, LOW);
+    digitalWrite(GREEN_PIN, LOW);
+    digitalWrite(BLUE_PIN, LOW);
 
-  // Turn on the selected LED
-  switch (color) {
-    case 'R':
-      digitalWrite(RED_PIN, HIGH);
-      break;
-    case 'G':
-      digitalWrite(GREEN_PIN, HIGH);
-      break;
-    case 'B':
-      digitalWrite(BLUE_PIN, HIGH);
-      break;
-    case 'C':
-      digitalWrite(BLUE_PIN, HIGH);
-      digitalWrite(GREEN_PIN, HIGH);
-      break;
-    default:
-      // If the input is not R, G, or BB, do nothing (all LEDs remain off)
-      break;
+    // Turn on the selected LEDs based on the desired color
+    switch (color) {
+        case 'R':
+            digitalWrite(RED_PIN, HIGH);  // Red only
+            break;
+        case 'G':
+            digitalWrite(GREEN_PIN, HIGH);  // Green only
+            break;
+        case 'B':
+            digitalWrite(BLUE_PIN, HIGH);  // Blue only
+            break;
+        case 'C':
+            // Cyan is a combination of Green and Blue
+            digitalWrite(GREEN_PIN, HIGH);
+            digitalWrite(BLUE_PIN, HIGH);
+            break;
+        case 'P':
+            // Purple is a combination of Red and Blue
+            digitalWrite(RED_PIN, HIGH);
+            digitalWrite(BLUE_PIN, HIGH);
+            break;
+        case 'Y':
+            // Yellow is a combination of Red and Green
+            digitalWrite(RED_PIN, HIGH);
+            digitalWrite(GREEN_PIN, HIGH);
+            break;
+        case 'W':
+            // White is a combination of Red, Green, and Blue
+            digitalWrite(RED_PIN, HIGH);
+            digitalWrite(GREEN_PIN, HIGH);
+            digitalWrite(BLUE_PIN, HIGH);
+            break;
+        default:
+            // If the input is not recognized, all LEDs remain off
+            break;
+    }
+}
+
+void BLINKontrack(){
+  unsigned long currentMillis = millis();
+
+  if ((ledState == true) && (currentMillis - previousMillis >= onTime)) {
+    // Turn off the LED after onTime
+    setColor('X'); // Assuming 'X' turns off all LEDs
+    ledState = false;
+    previousMillis = currentMillis; // Remember the time it switched off
+  } else if ((ledState == false) && (currentMillis - previousMillis >= offTime)) {
+    // Turn on the LED after offTime
+    setColor('G'); // Turn on Green LED
+    ledState = true;
+    previousMillis = currentMillis; // Remember the time it switched on
   }
 }
 
 
 
-
-
-                                                                                                            //TOFS
-
-float getSensor(String sensorID) {
+float getSensor(String sensorID) {                                                                                                  //TOFS
   fatalerrorcount-=1;
   if (fatalerrorcount > fatalerrorreset){
     ResetSensors();
@@ -576,8 +611,6 @@ void ResetSensors(){
   resetFunc();
 }
 
-
-
 void initializeSensors(){
   delay(50);
   digitalWrite(XSHUT_pin_F, HIGH);
@@ -615,4 +648,5 @@ void initializeSensors(){
   }
   BB.setAddress(addressB);
 }
+
 
