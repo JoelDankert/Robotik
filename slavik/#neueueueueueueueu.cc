@@ -49,11 +49,15 @@ const int Boffset = -1;
 #define GREEN_PIN 52
 #define BLUE_PIN 53
 
+void(* resetFunc) (void) = 0;
+
+
 int rightWallDistanceMax = 10;
-int rightWallDistanceAdj = 8;
 int frontWallDistanceMin = 10;
 int frontWallDistanceGoal = 15;
 int tryWallDistanceGoal = 15;
+int rightWallDistanceGoal = 6;
+
 float globalSpeed = 1;
 int fieldSize = 30;
 float timeperangle = 6;
@@ -63,27 +67,26 @@ float speedAdj = 0.2;
 int rightturncancel = 15;
 
 
-const float Frightturn = 0.1;
+const float Frightturn = 0.2;
 const float Fleftturnspeed = 1;
 
 
-const float anglediffADJ = -1;
 
 
 int state = 0;
 float EDcurrentchange = 10;
 float EDresetvalue = 30;
 int EDlast = 0;
-float EDcap = 3;
+float EDcap = 5;
 float EDchangeslow = 10;
 
 int fatalerrorcount = 0;
-int fatalerrorreset = 5;
+int fatalerrorreset = 100;
 
 
 
 float lastFront = 0;
-float frontmax = 5;
+float frontmax = 3;
 
 
 Servo dropoff;
@@ -95,8 +98,11 @@ Servo dropoff;
                                                                                                             //SETUP
 void setup() {
 
+
   Serial.begin(9600);
   Wire.begin();
+
+
 
   Serial.println("START");
 
@@ -140,6 +146,11 @@ void setup() {
   pinMode(resetPin, OUTPUT);
   digitalWrite(resetPin, HIGH);
 
+
+
+  
+
+
   dropoff.attach(servopin);  // Attaches the servo on pin 9 to the servo object
   dropoff.write(90);         // Make sure the servo is at position 0 degrees
 
@@ -175,6 +186,8 @@ void loop() {
   //motorsOff();  
   //TESTSENSORS();
   //Serial.print(detectColor());
+  //delay(3000);
+  //ResetSensors();
   MAIN();
   
   
@@ -185,7 +198,7 @@ void loop() {
 
 void MAIN() {
   while(true){
-    delay(50);                                                                                            //COLOR LED
+    delay(10);                                                                                            //COLOR LED
     if (state == 0){
       setColor('X');
     }
@@ -228,7 +241,10 @@ void MAIN() {
       bool skip = false;
       if (front > lastFront+frontmax){
         setColor('G');
+        moveBackward(1);
         delay(200);
+        turnLeft(Fleftturnspeed);
+        delay(300);
         skip = true;
       }
       delay(20);
@@ -256,12 +272,14 @@ void MAIN() {
     float rightF = getSensor("RF");
     float rightB = getSensor("RB");
 
-    float diff = rightF-rightB+anglediffADJ;
+    float distadj = (rightF - rightWallDistanceGoal)*0.7;
+
+    float diff = rightF-rightB+distadj;
     if (rightF <= tryWallDistanceGoal && rightB <= tryWallDistanceGoal){
       moveForward(1);
       if (state == -1){ state = 1; setColor('G');}
 
-      float compamount = max(min(   (abs(diff)/3   )   ,1),0);
+      float compamount = max(min(   (pow(abs(diff),2)*0.1)   ,1),0);
       float spdC = -1*compamount +1;
 
       if (diff > 0){
@@ -269,10 +287,6 @@ void MAIN() {
       }
       else{
         setMotorSpeedL(spdC);
-
-        if (rightF > rightWallDistanceAdj){
-          setMotorSpeedL(speedAdj);
-        }
       }
 
       
@@ -422,6 +436,7 @@ String detectColor() {
 }
 
 void resetSignal() {
+  motorsOff();
   digitalWrite(resetPin, LOW);  // Send a low signal to reset
   delay(100);                    // Hold the signal for 100 milliseconds
   digitalWrite(resetPin, HIGH);  // Return to high
@@ -498,16 +513,16 @@ void setColor(char color) {
                                                                                                             //TOFS
 
 float getSensor(String sensorID) {
-
+  fatalerrorcount-=1;
   if (fatalerrorcount > fatalerrorreset){
-    //ResetSensors();
+    ResetSensors();
   }
 
 
   if (sensorID == "FF") {
     int v = FF.readRangeSingleMillimeters();
-    if(v == 0 || v == -1 || v > 8000){
-      fatalerrorcount+=1;
+    if(v <= 1 ){
+      fatalerrorcount+=10;
       return 1000;
     }
     
@@ -519,8 +534,8 @@ float getSensor(String sensorID) {
 
   } else if (sensorID == "RF") {
     int v = RF.readRangeSingleMillimeters();
-    if(v == 0 || v == -1 || v > 8000){
-      fatalerrorcount+=1;
+    if(v <= 1 ){
+      fatalerrorcount+=10;
       return 1000;
     }
 
@@ -529,8 +544,8 @@ float getSensor(String sensorID) {
 
   } else if (sensorID == "RB") {
     int v = RB.readRangeSingleMillimeters();
-    if(v == 0 || v == -1 || v > 8000){
-      fatalerrorcount+=1;
+    if(v <= 1 ){
+      fatalerrorcount+=10;
       return 1000;
     }
     
@@ -540,8 +555,8 @@ float getSensor(String sensorID) {
 
   } else if (sensorID == "BB") {
     int v = BB.readRangeSingleMillimeters();
-    if(v == 0 || v == -1 || v > 8000){
-      fatalerrorcount+=1;
+    if(v <= 1 ){
+      //fatalerrorcount+=10;
       return 1000;
     }
 
@@ -557,14 +572,8 @@ float getSensor(String sensorID) {
 }
 
 void ResetSensors(){
-  motorsOff();
-  fatalerrorcount = 0;
-  setColor('R');
-  delay(500);
-  
-
-
-  delay(200);
+  setColor('X');
+  resetFunc();
 }
 
 
