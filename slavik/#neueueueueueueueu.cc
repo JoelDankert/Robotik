@@ -71,7 +71,8 @@ const float Frightturn = 0.1;
 const float Fleftturnspeed = 1;
 
 
-
+int lastred = 0;
+int reddelay = 2000;
 
 int state = 0;
 float EDcurrentchange = 30;
@@ -162,6 +163,10 @@ void setup() {  //SETUP
 
   digitalWrite(pinLED, LOW);
 
+  delay(500);
+  resetSignal();
+
+
   setColor('G');
   delay(100);
   setColor('B');
@@ -183,17 +188,23 @@ void setup() {  //SETUP
   setColor('B');
   delay(100);
   setColor('X');
+
+
+
+
 }
 
 void loop() {
 
   //spin(90);
 
-  //motorsOff();
+  //moveBackward(0.5);
   //TESTSENSORS();
   //Serial.print(detectColor());
   //delay(3000);
   //ResetSensors();
+  
+
   MAIN();
 
 
@@ -220,11 +231,17 @@ void MAIN() {
     det = detectColor();  //COLOR DETECTION ACTIONS (#CD)
     if (det == "Red") {
       fieldDetect();
+      lastred = millis();
+      resetSignal();
+      continue;
     }
-    if (det == "black") {
+    if (det == "Black") {
+      setColor('B');
       turnLeft(1);
-      delay(200);
+      delay(500);
       motorsOff();
+      resetSignal();
+      continue;
     }
 
 
@@ -429,20 +446,21 @@ void motorsOff() {
 }
 
 String detectColor() {  //COLOR DETECTION (#CD)
-  return "none";
+  //return "none";
 
   bool redSignal = digitalRead(redPin) == HIGH;
   bool blackSignal = digitalRead(blackPin) == HIGH;
-
-  if (redSignal && !blackSignal) {
+  Serial.println(redSignal);
+  Serial.println(blackSignal);
+  if (redSignal) {
     resetSignal();
+    if(millis() > lastred+reddelay){
+      return "none";
+    }
     return "Red";
-  } else if (blackSignal && !redSignal) {
+  } else if (blackSignal) {
     resetSignal();
     return "Black";
-  } else if (blackSignal && redSignal) {
-    resetSignal();
-    return "Both";
   }
   return "none";  // No color detected
 }
