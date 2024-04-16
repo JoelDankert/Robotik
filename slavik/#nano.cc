@@ -10,18 +10,22 @@ const int blackPin = 3;
 const int resetPin = 4;
 const int LEDpin = 5;
 float avgclear = -1;
-const int clearF = 10;
+const int clearF = 70;
+const int clearFF = 10;
+const int fastchange = 3000;
+int startmillis = 0;
 
 
 void setup() {
   Serial.begin(9600);
-
+  startmillis = millis();
   if (tcs.begin()) {
     Serial.println("Found sensor");
   } else {
     Serial.println("No TCS34725 found ... check your connections");
     while (1);  // Halt if sensor not found
   }
+  tcs.init();
 
   pinMode(redPin, OUTPUT);
   pinMode(blackPin, OUTPUT);
@@ -30,7 +34,6 @@ void setup() {
 
   digitalWrite(redPin, LOW);
   digitalWrite(blackPin, LOW);
-  digitalWrite(LEDpin, HIGH);
 }
 
 void loop() {
@@ -57,6 +60,8 @@ void loop() {
   delay(100);
 }
 void detectColor(bool &redAmount, bool &blackAmount) {
+  digitalWrite(LEDpin, HIGH);
+  delay(10);
   uint16_t clear, red, green, blue;
   tcs.getRawData(&red, &green, &blue, &clear);
 
@@ -66,11 +71,16 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   float b = blue / (float)clear;
 
   // Define thresholds for red, white, and black detection
-  const float redThreshold = 1.2;   // Example threshold for red
-  const float blackThreshold = 0.5;   // Example threshold for red
+  const float redThreshold = 1.8;   // Example threshold for red
+  const float blackThreshold = 0.7;   // Example threshold for red
 
   if (avgclear == -1){avgclear = clear;}
-  avgclear = (avgclear * clearF + clear) / (clearF+1);
+  if(millis()>startmillis+fastchange){
+    avgclear = (avgclear * clearF + clear) / (clearF+1);
+  }
+  else{
+    avgclear = (avgclear * clearFF + clear) / (clearFF+1);
+  }
 
 
   // Reset amounts
@@ -78,17 +88,19 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   blackAmount = false;
 
   // Detect colors based on thresholds
-  if (r > g*redThreshold && r > b*redThreshold) {
+  if (r > g*redThreshold && r > b*redThreshold && clear > 5) {
     redAmount = true; // Red detected
   }
-  if (clear < avgclear*blackThreshold) {
+  if (clear/avgclear < blackThreshold) {
     blackAmount = true; // Red detected
   }
-  Serial.println(" ");
-  Serial.println(r);
-  Serial.println(g);
-  Serial.println(b);
-  Serial.println(clear);
+  //Serial.println(" ");
+  //Serial.println(r);
+  //Serial.println(g);
+  //Serial.println(b);
+  //Serial.println(clear);
+  
+  digitalWrite(LEDpin, LOW);
 
 }
 
