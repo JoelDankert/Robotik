@@ -227,8 +227,7 @@ void MAIN() {
 
 
 
-    String det = "";
-    det = detectColor();  //COLOR DETECTION ACTIONS (#CD)
+    String det = detectColor();
     if (det == "Red") {
       fieldDetect();
       lastred = millis();
@@ -237,6 +236,8 @@ void MAIN() {
     }
     if (det == "Black") {
       setColor('B');
+      moveBackward(1);
+      delay(200);
       turnLeft(1);
       delay(500);
       motorsOff();
@@ -326,7 +327,7 @@ void MAIN() {
     //Exponential Wall-Alignment Righting Mechanism EWARM (#WC)
 
 
-    float distadj = (rightF - rightWallDistanceGoal) * 0.7;
+    float distadj = (rightF - rightWallDistanceGoal) * 1;
 
     float diff = rightF - rightB + distadj;
     if (rightF <= tryWallDistanceGoal && rightB <= tryWallDistanceGoal) {
@@ -453,13 +454,11 @@ String detectColor() {  //COLOR DETECTION (#CD)
   Serial.println(redSignal);
   Serial.println(blackSignal);
   if (redSignal) {
-    resetSignal();
     if(millis() > lastred+reddelay){
-      return "none";
+      return "Red";
     }
-    return "Red";
-  } else if (blackSignal) {
-    resetSignal();
+  }
+  if (blackSignal) {
     return "Black";
   }
   return "none";  // No color detected
@@ -473,7 +472,7 @@ void resetSignal() {
 }
 
 void fieldDetect() {  //DROPOFF SYSTEM (#DO)
-
+  motorsOff();
   setColor('R');
   delay(5000);
   setColor('X');
