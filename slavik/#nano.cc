@@ -34,15 +34,12 @@ void setup() {
 
   digitalWrite(redPin, LOW);
   digitalWrite(blackPin, LOW);
+  digitalWrite(LEDpin, HIGH);
 }
 
 void loop() {
-  if (digitalRead(resetPin) == LOW) {
-    digitalWrite(redPin, LOW);
-    digitalWrite(blackPin, LOW);
-  } else {
-    bool isRed, isBlack;
-    detectColor(isRed,isBlack);
+   bool isRed, isBlack;
+  detectColor(isRed,isBlack);
 
 
     if (isRed) {
@@ -55,12 +52,18 @@ void loop() {
       digitalWrite(blackPin, HIGH);
     }
       Serial.println(" ");
+  
+  
+  if (digitalRead(resetPin) == LOW) {
+    digitalWrite(redPin, LOW);
+    digitalWrite(blackPin, LOW);
   }
+  
+ 
 
   delay(100);
 }
 void detectColor(bool &redAmount, bool &blackAmount) {
-  digitalWrite(LEDpin, HIGH);
   delay(10);
   uint16_t clear, red, green, blue;
   tcs.getRawData(&red, &green, &blue, &clear);
@@ -71,8 +74,8 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   float b = blue / (float)clear;
 
   // Define thresholds for red, white, and black detection
-  const float redThreshold = 1.8;   // Example threshold for red
-  const float blackThreshold = 0.7;   // Example threshold for red
+  const float redThreshold = 1.2;
+  const float blackThreshold = 0.7;   
 
   if (avgclear == -1){avgclear = clear;}
   if(millis()>startmillis+fastchange){
@@ -80,6 +83,11 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   }
   else{
     avgclear = (avgclear * clearFF + clear) / (clearFF+1);
+  }
+
+
+  if (avgclear < 1){
+    avgclear = 1;
   }
 
 
@@ -94,14 +102,11 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   if (clear/avgclear < blackThreshold) {
     blackAmount = true; // Red detected
   }
-  //Serial.println(" ");
-  //Serial.println(r);
-  //Serial.println(g);
-  //Serial.println(b);
-  //Serial.println(clear);
-  
-  digitalWrite(LEDpin, LOW);
+  Serial.println(" ");
+  Serial.println(r);
+  Serial.println(g);
+  Serial.println(b);
+  Serial.println(clear);
 
 }
-
 
