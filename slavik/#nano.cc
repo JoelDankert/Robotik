@@ -109,4 +109,3 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   Serial.println(clear);
 
 }
-
