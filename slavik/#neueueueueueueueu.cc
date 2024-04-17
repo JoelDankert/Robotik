@@ -274,6 +274,7 @@ void MAIN() {
     if( front < frontWallDistanceMin){
       Serial.println("left turn: ");
       while (front < frontWallDistanceGoal && i < 20) {
+        skip = true;
         i++;
         turnLeft(Fleftturnspeed);
         if (state == -1) {
@@ -284,7 +285,7 @@ void MAIN() {
 
         bool skip = false;
         if (front > lastFront + frontmax) {  //Suboptimal Left Turn Quantification Compensator
-          Serial.println("/\\ suboptimal! compensating");
+          Serial.println("/ED\\");
           setColor('W');
           moveBackward(1);
           delay(100);
