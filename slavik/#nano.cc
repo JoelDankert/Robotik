@@ -75,7 +75,7 @@ void detectColor(bool &redAmount, bool &blackAmount) {
 
   // Define thresholds for red, white, and black detection
   const float redThreshold = 1.2;
-  const float blackThreshold = 0.7;   
+  const float blackThreshold = 0.5;   
 
   if (avgclear == -1){avgclear = clear;}
   if(millis()>startmillis+fastchange){
