@@ -10,8 +10,8 @@ const int blackPin = 3;
 const int resetPin = 4;
 const int LEDpin = 5;
 float avgclear = -1;
-const int clearF = 70;
-const int clearFF = 10;
+const int clearF = 300;
+const int clearFF = 50;
 const int fastchange = 3000;
 int startmillis = 0;
 
@@ -75,7 +75,8 @@ void detectColor(bool &redAmount, bool &blackAmount) {
 
   // Define thresholds for red, white, and black detection
   const float redThreshold = 1.2;
-  const float blackThreshold = 0.5;   
+  const float blackThreshold = 0.3;   
+  const float maxblackdiff = 0.5;
 
   if (avgclear == -1){avgclear = clear;}
   if(millis()>startmillis+fastchange){
@@ -96,10 +97,13 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   blackAmount = false;
 
   // Detect colors based on thresholds
-  if (r > g*redThreshold && r > b*redThreshold && clear > 5) {
+  if (r > g*redThreshold && r > b*redThreshold && clear > 8) {
     redAmount = true; // Red detected
   }
-  if (clear/avgclear < blackThreshold) {
+
+  float maxDiff = max(max(abs(r - g), abs(r - b)), abs(g - b));
+
+  if (clear / avgclear < blackThreshold && maxDiff <= maxblackdiff) {
     blackAmount = true; // Red detected
   }
   Serial.println(" ");
@@ -107,5 +111,6 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   Serial.println(g);
   Serial.println(b);
   Serial.println(clear);
+  Serial.println(avgclear);
 
 }
