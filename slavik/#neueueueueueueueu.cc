@@ -90,7 +90,7 @@ float lastFront = 0;
 float frontmax = 3;
 
 // Debug flags
-bool debug = false;
+bool debug = true;
 bool nocolor = false;
 
 // Blink variables
@@ -204,7 +204,6 @@ void loop() {
   //delay(3000);
   //ResetSensors();
   
-
   MAIN();
 
 
@@ -258,9 +257,11 @@ void MAIN() {
 
 
     int spd = 1;  //LEFT TURNS (#LT)
+    Serial.println("sensor grab");
     int front = getSensor("FF");
     float rightF = getSensor("RF");
     float rightB = getSensor("RB");
+    Serial.println("sensor grab finished");
 
     if (errordetecttick(front)) {  //ERRORDETECTTICK (#EDT)
       Serial.println("err det");
@@ -274,6 +275,7 @@ void MAIN() {
     if( front < frontWallDistanceMin){
       Serial.println("left turn: ");
       bool skip = false;
+      lastFront = front;
       while (front < frontWallDistanceGoal && i < 20) {
         skip = false;
         i++;
@@ -284,8 +286,8 @@ void MAIN() {
         }
         Serial.print(".");
 
-        if (front > lastFront + frontmax) {  //Suboptimal Left Turn Quantification Compensator
-          Serial.println("/ED\\");
+        if (front > lastFront + frontmax && lastFront < 30) {  //Suboptimal Left Turn Quantification Compensator
+          Serial.print("/ED\\");
           setColor('W');
           moveBackward(1);
           delay(100);
@@ -298,13 +300,15 @@ void MAIN() {
 
         front = getSensor("FF");
         if (skip) {
-          lastFront = front;
+          Serial.print("//");
+          continue;
         }
 
 
 
 
         if (errordetecttick(front)) {
+          Serial.print("!ED!");
           moveBackward(1);
           delay(500);
           motorsOff();
@@ -327,7 +331,8 @@ void MAIN() {
 
 
     if (rightF > rightWallDistanceMax) {
-      Serial.println("right turn");
+      Serial.println("right turn: ");
+      Serial.print(rightF);
       if (state == -1) {
         state = 2;
         setColor('B');
@@ -364,7 +369,7 @@ void MAIN() {
         BLINKontrack();
       }
       Serial.println("adjustment needed: ");
-      Serial.println(compamount);
+      Serial.print(compamount);
 
       if (diff > 0) {
         setMotorSpeedR(spdC);
@@ -509,6 +514,7 @@ void fieldDetect() {  //DROPOFF SYSTEM (#DO)
 }
 
 void TESTSENSORS() {  //DEBUG
+  Serial.println("sensors: ");
   int distanceFront = getSensor("FF");
   int distanceRightFront = getSensor("RF");
   int distanceRightBack = getSensor("RB");
@@ -660,7 +666,7 @@ void initializeSensors() {
     Serial.println("F Sensor init failed");
   }
   FF.setAddress(addressF);
-
+  RB.setTimeout(500);
 
   delay(50);
   digitalWrite(XSHUT_pin_RF, HIGH);
@@ -669,6 +675,7 @@ void initializeSensors() {
     Serial.println("RF Sensor init failed");
   }
   RF.setAddress(addressRF);
+  RB.setTimeout(500);
 
 
   delay(50);
@@ -678,6 +685,7 @@ void initializeSensors() {
     Serial.println("RB Sensor init failed");
   }
   RB.setAddress(addressRB);
+  RB.setTimeout(500);
 
 
   delay(50);
@@ -687,4 +695,5 @@ void initializeSensors() {
     Serial.println("B Sensor init failed");
   }
   BB.setAddress(addressB);
+  RB.setTimeout(500);
 }
