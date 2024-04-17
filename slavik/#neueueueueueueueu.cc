@@ -473,8 +473,6 @@ String detectColor() {  //COLOR DETECTION (#CD)
 
   bool redSignal = digitalRead(redPin) == HIGH;
   bool blackSignal = digitalRead(blackPin) == HIGH;
-  Serial.println(redSignal);
-  Serial.println(blackSignal);
   if (redSignal) {
     if(millis() > lastred+reddelay){
       return "Red";
