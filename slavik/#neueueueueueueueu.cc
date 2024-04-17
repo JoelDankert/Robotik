@@ -89,6 +89,8 @@ int fatalerrorreset = 100;
 float lastFront = 0;
 float frontmax = 3;
 
+bool debug = false;
+bool nocolor = false;
 
 //forblinktick
 unsigned long previousMillis = 0;  // will store last time LED was updated
@@ -215,7 +217,15 @@ void loop() {
 
 void MAIN() {
   while (true) {
+
+
+    
     delay(10);
+
+    
+    if (debug){
+      TESTSENSORS();
+    }
 
     if (state == 0 || state == -1) {  //RESETLED
       setColor('X');
@@ -225,9 +235,10 @@ void MAIN() {
 
 
 
-
-
-    String det = detectColor();
+    String det = "none";
+    if (!nocolor){
+      det = detectColor();
+    }
     if (det == "Red") {
       fieldDetect();
       lastred = millis();
@@ -252,7 +263,7 @@ void MAIN() {
     float rightF = getSensor("RF");
     float rightB = getSensor("RB");
 
-    if (errordetecttick(front)) {  //COLORDETECTTICK (#CDT)
+    if (errordetecttick(front)) {  //ERRORDETECTTICK (#EDT)
       moveBackward(1);
       setColor('W');
       delay(500);
@@ -261,12 +272,12 @@ void MAIN() {
 
     int i = 0;
     if( front < frontWallDistanceMin){
-      while (front < frontWallDistanceGoal && i < 30) {
+      while (front < frontWallDistanceGoal && i < 20) {
         i++;
         turnLeft(Fleftturnspeed);
         if (state == -1) {
           state = 3;
-          setColor('Y');
+          setColor('B');
         }
 
         bool skip = false;
@@ -311,7 +322,7 @@ void MAIN() {
     if (rightF > rightWallDistanceMax) {
       if (state == -1) {
         state = 2;
-        setColor('Y');
+        setColor('B');
       }
       if (front < rightturncancel) {
 
@@ -467,8 +478,9 @@ String detectColor() {  //COLOR DETECTION (#CD)
 void resetSignal() {
   motorsOff();
   digitalWrite(resetPin, LOW);   // Send a low signal to reset
-  delay(100);                    // Hold the signal for 100 milliseconds
+  delay(300);                    // Hold the signal for 100 milliseconds
   digitalWrite(resetPin, HIGH);  // Return to high
+  delay(100);
 }
 
 void fieldDetect() {  //DROPOFF SYSTEM (#DO)
