@@ -248,7 +248,7 @@ void MAIN() {
       moveBackward(1);
       delay(200);
       turnLeft(1);
-      delay(500);
+      delay(400);
       motorsOff();
       resetSignal();
       continue;
@@ -518,7 +518,6 @@ void TESTSENSORS() {  //DEBUG
   int distanceFront = getSensor("FF");
   int distanceRightFront = getSensor("RF");
   int distanceRightBack = getSensor("RB");
-  int distanceBack = getSensor("BB");
 
   // Write the distances to the serial port
   Serial.print("Front: ");
@@ -527,8 +526,6 @@ void TESTSENSORS() {  //DEBUG
   Serial.print(distanceRightFront);
   Serial.print(" cm, Right Back: ");
   Serial.print(distanceRightBack);
-  Serial.print(" cm, Back: ");
-  Serial.print(distanceBack);
   Serial.println(" cm");
 }
 
@@ -609,7 +606,7 @@ float getSensor(String sensorID) {  //TOFS
     }
 
 
-    float returnval = v / 10 + Boffset;
+    float returnval = v / 10 + Foffset;
     return returnval;
 
 
@@ -621,7 +618,7 @@ float getSensor(String sensorID) {  //TOFS
       return 1000;
     }
 
-    float returnval = v / 10 + Boffset;
+    float returnval = v / 10 + RFoffset;
     return returnval;
 
   } else if (sensorID == "RB") {
@@ -632,7 +629,7 @@ float getSensor(String sensorID) {  //TOFS
     }
 
 
-    float returnval = v / 10 + Boffset;
+    float returnval = v / 10 + RBoffset;
     return returnval;
 
   } else if (sensorID == "BB") {
