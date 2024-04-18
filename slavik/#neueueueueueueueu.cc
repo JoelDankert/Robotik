@@ -60,7 +60,7 @@ int rightWallDistanceMax = 10;
 int frontWallDistanceGoal = 15;
 int frontWallDistanceMin = 13;
 int tryWallDistanceGoal = 20;
-int rightWallDistanceGoal = 6;
+int rightWallDistanceGoal = 5;
 
 // Speed and time constants
 float globalSpeed = 1;
