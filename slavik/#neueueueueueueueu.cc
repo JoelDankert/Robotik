@@ -95,7 +95,7 @@ bool tickState = false;
 
 // Debug flags
 bool debug = false;
-bool nocolor = true;
+bool nocolor = false;
 
 // Blink variables
 unsigned long previousMillis = 0;  // will store last time LED was updated
@@ -253,7 +253,9 @@ void MAIN() {
       moveBackward(1);
       delay(200);
       turnLeft(1);
+      toggleTick();
       delay(400);
+      toggleTick();
       motorsOff();
       resetSignal();
       continue;
@@ -517,7 +519,11 @@ void toggleTick(){
 void fieldDetect() {  //DROPOFF SYSTEM (#DO)
   motorsOff();
   setColor('R');
-  delay(5000);
+  for (int i = 0; i < 11; i++) {
+    toggleTick();
+    delay(500);
+  }
+
   setColor('X');
 
   dropoff.write(0);
