@@ -87,7 +87,7 @@ void loop() {
       unchangedTicks = 0;
       lastTickState = currentTickState;
     }
-    if (unchangedTicks >= 20) {
+    if (unchangedTicks >= 30) {
       Serial.println("Tick signal stopped. Resetting Mega...");
       digitalWrite(resetmega, LOW); // Assuming LOW triggers a reset
       delay(100); // Hold the reset for 100ms
@@ -97,7 +97,7 @@ void loop() {
     }
   
   }
-  delay(25);
+  delay(40);
 }
 
 
