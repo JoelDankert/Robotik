@@ -15,8 +15,10 @@ const int clearFF = 50;
 const int fastchange = 3000;
 int startmillis = 0;
 
-const int tickpin = 6;
-const int resetmega = 7;
+const int tickpin = 8;
+const int resetmega = 9;
+bool firstTickDetected = true; // Flag to check if the first tick has been detected
+
 
 
 void setup() {
@@ -33,17 +35,19 @@ void setup() {
   pinMode(redPin, OUTPUT);
   pinMode(blackPin, OUTPUT);
   pinMode(LEDpin, OUTPUT);
-  pinMode(tickpin, INPUT)
+  pinMode(tickpin, INPUT);
+  pinMode(resetmega, OUTPUT);
   pinMode(resetPin, INPUT_PULLUP);  // Enable internal pull-up resistor
 
   digitalWrite(redPin, LOW);
   digitalWrite(blackPin, LOW);
   digitalWrite(LEDpin, HIGH);
+  digitalWrite(resetmega, HIGH);
 }
 
 void loop() {
   static int lastTickState = -1; // Stores the last tick state, initialized to -1
-  static int unchangedTicks = 0; // Counter for the number of iterations the tick has remained unchanged
+  static int unchangedTicks = -150; // Counter for the number of iterations the tick has remained unchanged
   
    bool isRed, isBlack;
   detectColor(isRed,isBlack);
@@ -67,29 +71,37 @@ void loop() {
   }
 
   int currentTickState = digitalRead(tickpin);
-  if (currentTickState == lastTickState) {
-    // If the tick state hasn't changed
-    unchangedTicks++;
+      Serial.println(unchangedTicks);
+ if (!firstTickDetected) {
+    if (currentTickState != lastTickState) {
+      firstTickDetected = true; // Set flag to true once the first change is detected
+      Serial.println("First tick detected. Monitoring for stability.");
+    }
   } else {
-    // Reset the counter if the tick state has changed
-    unchangedTicks = 0;
-  }
-  lastTickState = currentTickState; // Update the last tick state
-
-  // Check if the tick hasn't changed for 5 iterations
-  if (unchangedTicks >= 5) {
-    Serial.println("Tick signal stopped. Resetting Mega...");
-    digitalWrite(resetmega, LOW); // Assuming LOW triggers a reset
-    delay(100); // Hold the reset for 100ms
-    digitalWrite(resetmega, HIGH);
-    unchangedTicks = 0; // Reset the counter after resetting
-    delay(5000);
-  }
-
+    // Continue with tick monitoring only after the first tick has been detected
+    if (currentTickState == lastTickState) {
+      // If the tick state hasn't changed
+      unchangedTicks++;
+      lastTickState = currentTickState;
+    } else {
+      // Reset the counter if the tick state has changed
+      unchangedTicks = 0;
+      lastTickState = currentTickState;
+    }
+    if (unchangedTicks >= 30) {
+      Serial.println("Tick signal stopped. Resetting Mega...");
+      digitalWrite(resetmega, LOW); // Assuming LOW triggers a reset
+      delay(100); // Hold the reset for 100ms
+      digitalWrite(resetmega, HIGH);
+      unchangedTicks = -50; // Reset the counter after resetting
+      delay(2000); // Hold the reset for 100ms
+    }
   
- 
+  }
   delay(50);
 }
+
+
 void detectColor(bool &redAmount, bool &blackAmount) {
   delay(10);
   uint16_t clear, red, green, blue;
