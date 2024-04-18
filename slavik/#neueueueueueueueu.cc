@@ -60,7 +60,7 @@ int rightWallDistanceMax = 10;
 int frontWallDistanceGoal = 15;
 int frontWallDistanceMin = 13;
 int tryWallDistanceGoal = 20;
-int rightWallDistanceGoal = 5;
+int rightWallDistanceGoal = 8;
 
 // Speed and time constants
 float globalSpeed = 1;
@@ -87,11 +87,11 @@ float EDchangeslow = 10;
 int fatalerrorcount = 0;
 int fatalerrorreset = 100;
 float lastFront = 0;
-float frontmax = 3;
+float frontmax = 4;
 
 // Debug flags
-bool debug = true;
-bool nocolor = false;
+bool debug = false;
+bool nocolor = true;
 
 // Blink variables
 unsigned long previousMillis = 0;  // will store last time LED was updated
@@ -152,6 +152,7 @@ void setup() {  //SETUP
   pinMode(blackPin, INPUT);
   pinMode(resetPin, OUTPUT);
   digitalWrite(resetPin, HIGH);
+
 
 
 
@@ -367,7 +368,7 @@ void MAIN() {
         setColor('G');
       }
 
-      float compamount = max(min((pow(abs(diff), 2) * 0.1), 1), 0);
+      float compamount = max(min((pow(abs(diff), 2.5) * 0.06), 1), 0);
       float spdC = -1 * compamount + 1;
       if (compamount < 0.3) {
         BLINKontrack();
@@ -666,6 +667,8 @@ void initializeSensors() {
   delay(50);
   digitalWrite(XSHUT_pin_F, HIGH);
   delay(50);
+  
+  Serial.println("sensor init");
   if (!FF.init(true)) {
     Serial.println("F Sensor init failed");
   }
@@ -700,4 +703,6 @@ void initializeSensors() {
   }
   BB.setAddress(addressB);
   RB.setTimeout(500);
+  
+  Serial.println("sensor init completed");
 }
