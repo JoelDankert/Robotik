@@ -236,14 +236,14 @@ void MAIN() {
       det = detectColor();
     }
     if (det == "Red") {
-      Serial.println("red detected");
+      Serial.println("                              red detected");
       fieldDetect();
       lastred = millis();
       resetSignal();
       continue;
     }
     if (det == "Black") {
-      Serial.println("black detected");
+      Serial.println("                              black detected");
       setColor('B');
       moveBackward(1);
       delay(200);
@@ -259,8 +259,11 @@ void MAIN() {
     int spd = 1;  //LEFT TURNS (#LT)
     Serial.println("sensor grab");
     int front = getSensor("FF");
+    Serial.println("F check");
     float rightF = getSensor("RF");
+    Serial.println("RF check");
     float rightB = getSensor("RB");
+    Serial.println("RB check");
     Serial.println("sensor grab finished");
 
     if (errordetecttick(front)) {  //ERRORDETECTTICK (#EDT)
@@ -273,7 +276,8 @@ void MAIN() {
 
     int i = 0;
     if( front < frontWallDistanceMin){
-      Serial.println("left turn: ");
+      Serial.println("                              left turn: ");
+      Serial.println(">");
       bool skip = false;
       lastFront = front;
       while (front < frontWallDistanceGoal && i < 20) {
@@ -287,7 +291,7 @@ void MAIN() {
         Serial.print(".");
 
         if (front > lastFront + frontmax && lastFront < 30) {  //Suboptimal Left Turn Quantification Compensator
-          Serial.print("/ED\\");
+          Serial.print("!C!");
           setColor('W');
           moveBackward(1);
           delay(100);
@@ -331,7 +335,7 @@ void MAIN() {
 
 
     if (rightF > rightWallDistanceMax) {
-      Serial.println("right turn: ");
+      Serial.println("                              right turn: ");
       Serial.print(rightF);
       if (state == -1) {
         state = 2;
@@ -356,7 +360,7 @@ void MAIN() {
     float diff = rightF - rightB + distadj;
     if (rightF <= tryWallDistanceGoal && rightB <= tryWallDistanceGoal) {
       
-      Serial.println("alligning... ");
+      Serial.println("                              alligning... ");
       moveForward(1);
       if (state == -1) {
         state = 1;
@@ -516,8 +520,11 @@ void fieldDetect() {  //DROPOFF SYSTEM (#DO)
 void TESTSENSORS() {  //DEBUG
   Serial.println("sensors: ");
   int distanceFront = getSensor("FF");
+  Serial.println("F check");
   int distanceRightFront = getSensor("RF");
+  Serial.println("RF check");
   int distanceRightBack = getSensor("RB");
+  Serial.println("RF check");
 
   // Write the distances to the serial port
   Serial.print("Front: ");
