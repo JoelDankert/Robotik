@@ -43,6 +43,8 @@ const int Boffset = -1;
 #define blackPin 30  // Pin connected to the black signal from the Nano
 #define resetPin 31  // Output pin to send reset signal to the Nano
 
+#define tickPin 42
+
 // Servo pin
 #define servopin 22
 
@@ -88,6 +90,8 @@ int fatalerrorcount = 0;
 int fatalerrorreset = 100;
 float lastFront = 0;
 float frontmax = 4;
+bool tickState = false;
+
 
 // Debug flags
 bool debug = false;
@@ -219,7 +223,7 @@ void MAIN() {
 
     
     delay(10);
-
+    toggleTick();
     
     if (debug){
       TESTSENSORS();
@@ -282,6 +286,8 @@ void MAIN() {
       bool skip = false;
       lastFront = front;
       while (front < frontWallDistanceGoal && i < 20) {
+        
+        toggleTick();
         skip = false;
         i++;
         turnLeft(Fleftturnspeed);
@@ -501,6 +507,11 @@ void resetSignal() {
   delay(200);                    // Hold the signal for 100 milliseconds
   digitalWrite(resetPin, HIGH);  // Return to high
   delay(100);
+}
+void toggleTick(){
+  tickState = !tickState; // Toggle the state
+  digitalWrite(tickPin, tickState); // Update the pin state
+
 }
 
 void fieldDetect() {  //DROPOFF SYSTEM (#DO)
