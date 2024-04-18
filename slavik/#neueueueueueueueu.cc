@@ -497,7 +497,7 @@ String detectColor() {  //COLOR DETECTION (#CD)
 void resetSignal() {
   motorsOff();
   digitalWrite(resetPin, LOW);   // Send a low signal to reset
-  delay(300);                    // Hold the signal for 100 milliseconds
+  delay(200);                    // Hold the signal for 100 milliseconds
   digitalWrite(resetPin, HIGH);  // Return to high
   delay(100);
 }
