@@ -76,6 +76,7 @@ const float Fleftturnspeed = 1;
 // Color detection variables
 int lastred = 0;
 int reddelay = 2000;
+bool hasclearedred = true;
 
 // State variables
 int state = 0;
@@ -244,6 +245,7 @@ void MAIN() {
       Serial.println("                              red detected");
       fieldDetect();
       lastred = millis();
+      hasclearedred = false;
       resetSignal();
       continue;
     }
@@ -494,6 +496,11 @@ String detectColor() {  //COLOR DETECTION (#CD)
   bool blackSignal = digitalRead(blackPin) == HIGH;
   if (redSignal) {
     if(millis() > lastred+reddelay){
+      if(!hasclearedred){
+        hasclearedred = true;
+        resetSignal();
+        return "none";
+      }
       return "Red";
     }
   }
@@ -519,20 +526,26 @@ void toggleTick(){
 void fieldDetect() {  //DROPOFF SYSTEM (#DO)
   motorsOff();
   setColor('R');
-  for (int i = 0; i < 11; i++) {
+  for (int i = 0; i < 22; i++) {
     toggleTick();
-    delay(500);
+    delay(250);
   }
 
   setColor('X');
 
   dropoff.write(0);
-  delay(500);
+  delay(250);
+  toggleTick();
+  delay(250);
   dropoff.write(90);
+  toggleTick();
   delay(50);
   dropoff.write(180);
-  delay(500);
+  delay(250);
+  toggleTick();
+  delay(250);
   dropoff.write(90);
+  toggleTick();
 }
 
 void TESTSENSORS() {  //DEBUG
