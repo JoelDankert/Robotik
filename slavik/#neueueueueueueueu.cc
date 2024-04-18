@@ -157,7 +157,7 @@ void setup() {  //SETUP
   pinMode(resetPin, OUTPUT);
   digitalWrite(resetPin, HIGH);
 
-
+  pinMode(tickPin, OUTPUT);
 
 
 
