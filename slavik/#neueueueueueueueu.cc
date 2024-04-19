@@ -60,9 +60,9 @@ void (*resetFunc)(void) = 0;
 // Distance thresholds
 int rightWallDistanceMax = 10;
 int frontWallDistanceGoal = 15;
-int frontWallDistanceMin = 13;
+int frontWallDistanceMin = 8;
 int tryWallDistanceGoal = 20;
-int rightWallDistanceGoal = 8;
+int rightWallDistanceGoal = 7;
 
 // Speed and time constants
 float globalSpeed = 1;
@@ -75,7 +75,7 @@ const float Fleftturnspeed = 1;
 
 // Color detection variables
 int lastred = 0;
-int reddelay = 2000;
+int reddelay = 4000;
 bool hasclearedred = true;
 
 // State variables
@@ -90,7 +90,7 @@ float EDchangeslow = 10;
 int fatalerrorcount = 0;
 int fatalerrorreset = 100;
 float lastFront = 0;
-float frontmax = 4;
+float frontmax = 5;
 bool tickState = false;
 
 
@@ -238,31 +238,9 @@ void MAIN() {
 
 
 
-    String det = "none";
-    if (!nocolor){
-      det = detectColor();
-    }
-    if (det == "Red") {
-      Serial.println("                              red detected");
-      fieldDetect();
-      lastred = millis();
-      hasclearedred = false;
-      resetSignal();
-      continue;
-    }
-    if (det == "Black") {
-      Serial.println("                              black detected");
-      setColor('B');
-      moveBackward(1);
-      delay(300);
-      turnLeft(1);
-      toggleTick();
-      delay(600);
-      toggleTick();
-      motorsOff();
-      resetSignal();
-      continue;
-    }
+   if (trydetcol()){
+    continue;
+   }
 
 
 
@@ -301,7 +279,7 @@ void MAIN() {
           setColor('B');
         }
         Serial.print(".");
-
+        trydetcol();
         if (front > lastFront + frontmax && lastFront < 30) {  //Suboptimal Left Turn Quantification Compensator
           Serial.print("!C!");
           setColor('W');
@@ -495,13 +473,19 @@ String detectColor() {  //COLOR DETECTION (#CD)
 
   bool redSignal = digitalRead(redPin) == HIGH;
   bool blackSignal = digitalRead(blackPin) == HIGH;
-  if (redSignal) {
-    if(millis() > lastred+reddelay){
+
+
+  if(millis() > lastred+reddelay){
       if(!hasclearedred){
+        Serial.println("                              red RESETTED");
         hasclearedred = true;
         resetSignal();
         return "none";
       }
+    }
+  
+  if (redSignal) {
+    if(millis() > lastred+reddelay && hasclearedred){
       return "Red";
     }
   }
@@ -509,6 +493,35 @@ String detectColor() {  //COLOR DETECTION (#CD)
     return "Black";
   }
   return "none";  // No color detected
+}
+
+bool trydetcol(){
+   String det = "none";
+    if (!nocolor){
+      det = detectColor();
+    }
+    if (det == "Red") {
+      Serial.println("                              red detected");
+      fieldDetect();
+      lastred = millis();
+      hasclearedred = false;
+      resetSignal();
+      return true;
+    }
+    if (det == "Black") {
+      Serial.println("                              black detected");
+      setColor('B');
+      moveBackward(1);
+      delay(400);
+      turnLeft(1);
+      toggleTick();
+      delay(700);
+      toggleTick();
+      motorsOff();
+      resetSignal();
+      return true;
+    }
+    return false;
 }
 
 void resetSignal() {
