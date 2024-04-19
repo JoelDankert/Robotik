@@ -88,7 +88,7 @@ void loop() {
       unchangedTicks = 0;
       lastTickState = currentTickState;
     }
-    if (unchangedTicks >= 30) {
+    if (unchangedTicks >= 40) {
       Serial.println("Tick signal stopped. Resetting Mega...");
       digitalWrite(resetmega, LOW); // Assuming LOW triggers a reset
       delay(100); // Hold the reset for 100ms
@@ -98,7 +98,7 @@ void loop() {
     }
   
   }
-  delay(40);
+  delay(30);
 }
 
 
@@ -113,7 +113,7 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   float b = blue / (float)clear;
 
   // Define thresholds for red, white, and black detection
-  const float redThreshold = 1.3;
+  const float redThreshold = 1.4;
   const float blackThreshold = 0.3;   
   const float maxblackdiff = 0.5;
 
