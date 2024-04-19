@@ -8,6 +8,7 @@ Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS3472
 // Define pin numbers for outputs and reset input
 const int redPin = 2;
 const int blackPin = 3;
+const int greenPin = 10;
 const int resetPin = 4;
 const int LEDpin = 5;
 float avgclear = -1;
@@ -50,8 +51,8 @@ void loop() {
   static int lastTickState = -1; // Stores the last tick state, initialized to -1
   static int unchangedTicks = -150; // Counter for the number of iterations the tick has remained unchanged
   
-   bool isRed, isBlack;
-  detectColor(isRed,isBlack);
+   bool isRed, isBlack, isGreen;
+  detectColor(isRed,isBlack,isGreen);
 
 
     if (isRed) {
@@ -63,12 +64,17 @@ void loop() {
       Serial.println("bobr");
       digitalWrite(blackPin, HIGH);
     }
+    if (isGreen) {
+      Serial.println("trier");
+      digitalWrite(greenPin, HIGH);
+    }
       Serial.println(" ");
   
   
   if (digitalRead(resetPin) == LOW) {
     digitalWrite(redPin, LOW);
     digitalWrite(blackPin, LOW);
+    digitalWrite(greenPin, LOW);
   }
 
   int currentTickState = digitalRead(tickpin);
@@ -102,7 +108,7 @@ void loop() {
 }
 
 
-void detectColor(bool &redAmount, bool &blackAmount) {
+void detectColor(bool &redAmount, bool &blackAmount, bool &greenAmount) {
   delay(10);
   uint16_t clear, red, green, blue;
   tcs.getRawData(&red, &green, &blue, &clear);
@@ -114,6 +120,7 @@ void detectColor(bool &redAmount, bool &blackAmount) {
 
   // Define thresholds for red, white, and black detection
   const float redThreshold = 1.3;
+  const float greenThreshold = 1.3;
   const float blackThreshold = 0.3;   
   const float maxblackdiff = 0.5;
 
@@ -134,16 +141,20 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   // Reset amounts
   redAmount = false;
   blackAmount = false;
+  greenAmount = false;
 
   // Detect colors based on thresholds
   if (r > g*redThreshold && r > b*redThreshold && clear > 8) {
     redAmount = true; // Red detected
   }
+  if (g > r*greenThreshold && g > b*greenThreshold && clear > 8) {
+    greenAmount = true; // green detected
+  }
 
   float maxDiff = max(max(abs(r - g), abs(r - b)), abs(g - b));
 
   if (clear / avgclear < blackThreshold && maxDiff <= maxblackdiff) {
-    blackAmount = true; // Red detected
+    blackAmount = true; // black detected
   }
   Serial.println(" ");
   Serial.println(r);
