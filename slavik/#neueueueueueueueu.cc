@@ -42,6 +42,7 @@ const int Boffset = -1;
 #define redPin 29    // Pin connected to the red signal from the Nano
 #define blackPin 30  // Pin connected to the black signal from the Nano
 #define resetPin 31  // Output pin to send reset signal to the Nano
+#define greenPin 32  // Output pin to send reset signal to the Nano
 
 #define tickPin 42
 
@@ -473,6 +474,7 @@ String detectColor() {  //COLOR DETECTION (#CD)
 
   bool redSignal = digitalRead(redPin) == HIGH;
   bool blackSignal = digitalRead(blackPin) == HIGH;
+  bool greenSignal = digitalRead(greenPin) == HIGH;
 
 
   if(millis() > lastred+reddelay){
@@ -487,6 +489,11 @@ String detectColor() {  //COLOR DETECTION (#CD)
   if (redSignal) {
     if(millis() > lastred+reddelay && hasclearedred){
       return "Red";
+    }
+  }
+  if (greenSignal) {
+    if(millis() > 10000){
+      return "Green";
     }
   }
   if (blackSignal) {
@@ -520,6 +527,14 @@ bool trydetcol(){
       motorsOff();
       resetSignal();
       return true;
+    }
+    if (det == "Green") {
+      Serial.println("                              exit bonus");
+      setColor('C');
+      motorsOff();
+      delay(11000);
+      ResetSensors();
+      
     }
     return false;
 }
