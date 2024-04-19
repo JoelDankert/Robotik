@@ -147,7 +147,7 @@ void detectColor(bool &redAmount, bool &blackAmount, bool &greenAmount) {
   if (r > g*redThreshold && r > b*redThreshold && clear > 8) {
     redAmount = true; // Red detected
   }
-  if (g > r*greenThreshold && g > b*greenThreshold && clear > 8) {
+  if (g > b*greenThreshold && r > b*greenThreshold && clear > 8) {
     greenAmount = true; // green detected
   }
 
