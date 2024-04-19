@@ -60,7 +60,7 @@ void (*resetFunc)(void) = 0;
 
 // Distance thresholds
 int rightWallDistanceMax = 10;
-int frontWallDistanceGoal = 15;
+int frontWallDistanceGoal = 12;
 int frontWallDistanceMin = 8;
 int tryWallDistanceGoal = 20;
 int rightWallDistanceGoal = 7;
@@ -94,7 +94,11 @@ int fatalerrorreset = 100;
 float lastFront = 0;
 float frontmax = 5;
 bool tickState = false;
-
+int dashStrength = 1000;
+int dashFrequency = 3000;
+float dashSpeed = 0.5;
+int lastExecutedDash = 0;  // Time when dashTick was last executed
+int minfrontdistdash = 20;
 
 // Debug flags
 bool debug = false;
@@ -325,11 +329,10 @@ void MAIN() {
 
     //RIGHT TURNS (#RT)
 
-
-
     if (rightF > rightWallDistanceMax) {
       Serial.println("                              right turn: ");
       Serial.print(rightF);
+      dashTick(front);
       if (state == -1) {
         state = 2;
         setColor('B');
@@ -562,6 +565,45 @@ void toggleTick(){
   digitalWrite(tickPin, tickState); // Update the pin state
 
 }
+
+
+void dashTick(int front) {
+
+  // Check if 2 seconds have passed since the last execution
+  Serial.println("dashtick > ");
+  Serial.print(millis()-lastExecutedDash);
+  if (millis() - lastExecutedDash < dashFrequency) {
+    return;  // Exit the function if less than 2 seconds have passed
+  }
+  if (front < minfrontdistdash){
+    return;
+  }
+
+  // Update lastExecuted to the current time
+  unsigned long elapsed = 0;  // Accumulate the elapsed time in increments of 50 ms
+
+  motorsOff();
+  delay(50);
+  moveForward(dashSpeed);
+
+  // Loop, incrementing by 50 ms each cycle until `dashStrength` is reached
+  while (elapsed < dashStrength) {
+    trydetcol();               // Perform the detection/collision check
+    delay(100);                 // Wait for 50 milliseconds
+    elapsed += 100;             // Increment the elapsed time by 50 ms
+  }
+
+  motorsOff();
+  delay(50);
+  moveBackward(dashSpeed);
+  delay(dashStrength);      // Ensuring the backward movement happens with the same pause as forward
+  motorsOff();
+  delay(50);
+  lastExecutedDash = millis();
+
+}
+
+
 
 void fieldDetect() {  //DROPOFF SYSTEM (#DO)
   motorsOff();
