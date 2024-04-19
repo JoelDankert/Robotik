@@ -113,7 +113,7 @@ void detectColor(bool &redAmount, bool &blackAmount) {
   float b = blue / (float)clear;
 
   // Define thresholds for red, white, and black detection
-  const float redThreshold = 1.5;
+  const float redThreshold = 1.3;
   const float blackThreshold = 0.3;   
   const float maxblackdiff = 0.5;
 
