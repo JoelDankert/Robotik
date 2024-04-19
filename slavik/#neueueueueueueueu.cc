@@ -97,7 +97,7 @@ bool tickState = false;
 int dashStrength = 1000;
 int dashFrequency = 3000;
 float dashSpeed = 0.5;
-int lastExecutedDash = 0;  // Time when dashTick was last executed
+long lastExecutedDash = 0;  // Time when dashTick was last executed
 int minfrontdistdash = 20;
 
 // Debug flags
@@ -589,6 +589,7 @@ void dashTick(int front) {
   // Loop, incrementing by 50 ms each cycle until `dashStrength` is reached
   while (elapsed < dashStrength) {
     trydetcol();               // Perform the detection/collision check
+    toggleTick();
     delay(100);                 // Wait for 50 milliseconds
     elapsed += 100;             // Increment the elapsed time by 50 ms
   }
