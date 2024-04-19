@@ -170,7 +170,6 @@ void setup() {  //SETUP
   digitalWrite(pinLED, LOW);
 
   delay(500);
-  resetSignal();
 
 
   setColor('G');
@@ -196,6 +195,8 @@ void setup() {  //SETUP
   setColor('X');
 
 
+  resetSignal();
+  delay(100);
 
 
 }
