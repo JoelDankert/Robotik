@@ -540,6 +540,8 @@ bool trydetcol(){
     if (det == "Green") {
       Serial.println("                              exit bonus");
       setColor('C');
+      moveForward();
+      delay(300);
       motorsOff();
       delay(11000);
       ResetSensors();
