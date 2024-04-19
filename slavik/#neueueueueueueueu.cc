@@ -253,10 +253,10 @@ void MAIN() {
       Serial.println("                              black detected");
       setColor('B');
       moveBackward(1);
-      delay(200);
+      delay(300);
       turnLeft(1);
       toggleTick();
-      delay(400);
+      delay(600);
       toggleTick();
       motorsOff();
       resetSignal();
