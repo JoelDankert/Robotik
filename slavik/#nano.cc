@@ -36,6 +36,7 @@ void setup() {
 
   pinMode(redPin, OUTPUT);
   pinMode(blackPin, OUTPUT);
+  pinMode(greenPin, OUTPUT);
   pinMode(LEDpin, OUTPUT);
   pinMode(tickpin, INPUT);
   pinMode(resetmega, OUTPUT);
@@ -120,7 +121,7 @@ void detectColor(bool &redAmount, bool &blackAmount, bool &greenAmount) {
 
   // Define thresholds for red, white, and black detection
   const float redThreshold = 1.3;
-  const float greenThreshold = 1.3;
+  const float greenThreshold = 1.5;
   const float blackThreshold = 0.3;   
   const float maxblackdiff = 0.5;
 
