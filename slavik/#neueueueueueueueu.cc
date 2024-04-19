@@ -78,6 +78,7 @@ const float Fleftturnspeed = 1;
 int lastred = 0;
 int reddelay = 4000;
 bool hasclearedred = true;
+bool hasclearedgreen = false;
 
 // State variables
 int state = 0;
@@ -156,6 +157,7 @@ void setup() {  //SETUP
 
   pinMode(redPin, INPUT);
   pinMode(blackPin, INPUT);
+  pinMode(greenPin, INPUT);
   pinMode(resetPin, OUTPUT);
   digitalWrite(resetPin, HIGH);
 
@@ -485,6 +487,13 @@ String detectColor() {  //COLOR DETECTION (#CD)
         return "none";
       }
     }
+
+  if (millis() > 10000 && !hasclearedgreen){
+    Serial.println("                              green RESETTED");
+    hasclearedgreen = true;
+    resetSignal();
+    return "none";
+  }
   
   if (redSignal) {
     if(millis() > lastred+reddelay && hasclearedred){
