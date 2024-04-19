@@ -39,10 +39,10 @@ const int Boffset = -1;
 #define MOTOR4_SPEED 6
 
 // Color detection pins
-#define redPin 29    // Pin connected to the red signal from the Nano
-#define blackPin 30  // Pin connected to the black signal from the Nano
-#define resetPin 31  // Output pin to send reset signal to the Nano
-#define greenPin 32  // Output pin to send reset signal to the Nano
+#define redPin 29    
+#define blackPin 30  
+#define resetPin 31  
+#define greenPin 32  
 
 #define tickPin 42
 
@@ -171,8 +171,8 @@ void setup() {  //SETUP
 
 
 
-  dropoff.attach(servopin);  // Attaches the servo on pin 9 to the servo object
-  dropoff.write(90);         // Make sure the servo is at position 0 degrees
+  dropoff.attach(servopin);  
+  dropoff.write(90);        
 
   digitalWrite(pinLED, LOW);
 
@@ -555,49 +555,47 @@ bool trydetcol(){
 
 void resetSignal() {
   motorsOff();
-  digitalWrite(resetPin, LOW);   // Send a low signal to reset
-  delay(200);                    // Hold the signal for 100 milliseconds
-  digitalWrite(resetPin, HIGH);  // Return to high
+  digitalWrite(resetPin, LOW);   
+  delay(200);                    
+  digitalWrite(resetPin, HIGH);  
   delay(100);
 }
 void toggleTick(){
-  tickState = !tickState; // Toggle the state
-  digitalWrite(tickPin, tickState); // Update the pin state
+  tickState = !tickState; 
+  digitalWrite(tickPin, tickState); 
 
 }
 
 
 void dashTick(int front) {
 
-  // Check if 2 seconds have passed since the last execution
   Serial.println("dashtick > ");
   Serial.print(millis()-lastExecutedDash);
   if (millis() - lastExecutedDash < dashFrequency) {
-    return;  // Exit the function if less than 2 seconds have passed
+    return;  
   }
   if (front < minfrontdistdash){
     return;
   }
 
-  // Update lastExecuted to the current time
-  unsigned long elapsed = 0;  // Accumulate the elapsed time in increments of 50 ms
+  
+  unsigned long elapsed = 0;  
 
   motorsOff();
   delay(50);
   moveForward(dashSpeed);
 
-  // Loop, incrementing by 50 ms each cycle until `dashStrength` is reached
   while (elapsed < dashStrength) {
-    trydetcol();               // Perform the detection/collision check
+    trydetcol();               
     toggleTick();
-    delay(100);                 // Wait for 50 milliseconds
-    elapsed += 100;             // Increment the elapsed time by 50 ms
+    delay(100);                 
+    elapsed += 100;             
   }
 
   motorsOff();
   delay(50);
   moveBackward(dashSpeed);
-  delay(dashStrength);      // Ensuring the backward movement happens with the same pause as forward
+  delay(dashStrength);      
   motorsOff();
   delay(50);
   lastExecutedDash = millis();
@@ -668,22 +666,22 @@ void setColor(char color) {
       digitalWrite(BLUE_PIN, HIGH);  // Blue only
       break;
     case 'C':
-      // Cyan is a combination of Green and Blue
+      
       digitalWrite(GREEN_PIN, HIGH);
       digitalWrite(BLUE_PIN, HIGH);
       break;
     case 'P':
-      // Purple is a combination of Red and Blue
+      
       digitalWrite(RED_PIN, HIGH);
       digitalWrite(BLUE_PIN, HIGH);
       break;
     case 'Y':
-      // Yellow is a combination of Red and Green
+      
       digitalWrite(RED_PIN, HIGH);
       digitalWrite(GREEN_PIN, HIGH);
       break;
     case 'W':
-      // White is a combination of Red, Green, and Blue
+      
       digitalWrite(RED_PIN, HIGH);
       digitalWrite(GREEN_PIN, HIGH);
       digitalWrite(BLUE_PIN, HIGH);
@@ -698,13 +696,13 @@ void BLINKontrack() {
   unsigned long currentMillis = millis();
 
   if ((ledState == true) && (currentMillis - previousMillis >= onTime)) {
-    // Turn off the LED after onTime
-    setColor('X');  // Assuming 'X' turns off all LEDs
+    
+    setColor('X');  
     ledState = false;
-    previousMillis = currentMillis;  // Remember the time it switched off
+    previousMillis = currentMillis;
   } else if ((ledState == false) && (currentMillis - previousMillis >= offTime)) {
-    // Turn on the LED after offTime
-    setColor('G');  // Turn on Green LED
+    
+    setColor('G');  
     ledState = true;
     previousMillis = currentMillis;  // Remember the time it switched on
   }
