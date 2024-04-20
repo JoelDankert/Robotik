@@ -80,7 +80,7 @@ int reddelay = 4000;
 bool hasclearedred = true;
 bool hasclearedgreen = false;
 
-// State variables
+// State variablesf
 int state = 0;
 
 // Error detection variables
@@ -95,7 +95,7 @@ float lastFront = 0;
 float frontmax = 5;
 bool tickState = false;
 int dashStrength = 700;
-int dashStrengthBack = 1200;
+int dashStrengthBack = 1300;
 int dashFrequency = 1200;
 float dashSpeed = 0.7;
 float dashSpeedBack = 0.4;
@@ -105,6 +105,8 @@ int minfrontdistdash = 20;
 // Debug flags
 bool debug = false;
 bool nocolor = false;
+bool nodash = true;
+bool noblack = true;
 
 // Blink variables
 unsigned long previousMillis = 0;  // will store last time LED was updated
@@ -334,7 +336,10 @@ void MAIN() {
     if (rightF > rightWallDistanceMax) {
       Serial.println("                              right turn: ");
       Serial.print(rightF);
-      dashTick(front);
+      if(!nodash){
+        dashTick(front);
+      }
+      
       if (state == -1) {
         state = 2;
         setColor('B');
@@ -529,7 +534,7 @@ int trydetcol(){
       resetSignal();
       return 1;
     }
-    if (det == "Black") {
+    if (det == "Black" && !noblack) {
       Serial.println("                              black detected");
       setColor('B');
       moveBackward(1);
