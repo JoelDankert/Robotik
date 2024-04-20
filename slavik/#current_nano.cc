@@ -107,7 +107,7 @@ void loop() {
     }
   
   }
-  delay(30);
+  delay(10);
 }
 
 
@@ -122,7 +122,7 @@ void detectColor(bool &redAmount, bool &blackAmount, bool &greenAmount) {
   float b = blue / (float)clear;
 
   // Define thresholds for red, white, and black detection
-  const float redThreshold = 1.3;
+  const float redThreshold = 1.2;
   const float greenThreshold = 1.5;
   const float blackThreshold = 0.3;   
   const float maxblackdiff = 0.5;
