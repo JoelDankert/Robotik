@@ -98,6 +98,7 @@ int dashStrengthBack = 1000;
 int dashFrequency = 1200;
 float dashSpeed = 0.7;
 float dashSpeedBack = 0.5;
+float dashSpeedBackL = 0.4;
 long lastExecutedDash = 0;  // Time when dashTick was last executed
 int minfrontdistdash = 23;
 
@@ -623,6 +624,7 @@ void dashTick(int front) {
   motorsOff();
   delay(50);
   moveBackward(dashSpeedBack);
+  setMotorSpeedL(dashSpeedBackL);
 
   elapsed = 0;
   
