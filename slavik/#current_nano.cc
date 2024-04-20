@@ -100,8 +100,10 @@ void loop() {
       digitalWrite(resetmega, LOW); // Assuming LOW triggers a reset
       delay(100); // Hold the reset for 100ms
       digitalWrite(resetmega, HIGH);
-      unchangedTicks = -50; // Reset the counter after resetting
+      unchangedTicks = -150; // Reset the counter after resetting
       delay(2000); // Hold the reset for 100ms
+      firstTickDetected = false;
+      lastTickState = digitalRead(tickpin);
     }
   
   }
