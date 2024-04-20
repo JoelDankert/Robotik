@@ -105,8 +105,8 @@ int minfrontdistdash = 20;
 // Debug flags
 bool debug = false;
 bool nocolor = false;
-bool nodash = true;
-bool noblack = true;
+bool nodash = false;
+bool noblack = false;
 
 // Blink variables
 unsigned long previousMillis = 0;  // will store last time LED was updated
@@ -505,7 +505,7 @@ String detectColor() {  //COLOR DETECTION (#CD)
     return "none";
   }
   
-  if (redSignal) {
+  if (redSignal && hasclearedred) {
     if(millis() > lastred+reddelay && hasclearedred){
       return "Red";
     }
@@ -553,7 +553,10 @@ int trydetcol(){
       moveForward(1);
       delay(500);
       motorsOff();
-      delay(11000);
+      for (int x = 0; x<13000; x+=100){
+        delay(100);
+        toggleTick();
+      }
       ResetSensors();
       
     }
