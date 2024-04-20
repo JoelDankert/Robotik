@@ -59,7 +59,7 @@ const int Boffset = -1;
 void (*resetFunc)(void) = 0;
 
 // Distance thresholds
-int rightWallDistanceMax = 10;
+int rightWallDistanceMax = 14;
 int frontWallDistanceGoal = 12;
 int frontWallDistanceMin = 8;
 int tryWallDistanceGoal = 20;
@@ -94,9 +94,11 @@ int fatalerrorreset = 100;
 float lastFront = 0;
 float frontmax = 5;
 bool tickState = false;
-int dashStrength = 1000;
-int dashFrequency = 3000;
-float dashSpeed = 0.5;
+int dashStrength = 700;
+int dashStrengthBack = 1200;
+int dashFrequency = 1200;
+float dashSpeed = 0.7;
+float dashSpeedBack = 0.4;
 long lastExecutedDash = 0;  // Time when dashTick was last executed
 int minfrontdistdash = 20;
 
@@ -245,7 +247,7 @@ void MAIN() {
 
 
 
-   if (trydetcol()){
+   if (trydetcol()>0){
     continue;
    }
 
@@ -514,7 +516,7 @@ String detectColor() {  //COLOR DETECTION (#CD)
   return "none";  // No color detected
 }
 
-bool trydetcol(){
+int trydetcol(){
    String det = "none";
     if (!nocolor){
       det = detectColor();
@@ -525,7 +527,7 @@ bool trydetcol(){
       lastred = millis();
       hasclearedred = false;
       resetSignal();
-      return true;
+      return 1;
     }
     if (det == "Black") {
       Serial.println("                              black detected");
@@ -538,7 +540,7 @@ bool trydetcol(){
       toggleTick();
       motorsOff();
       resetSignal();
-      return true;
+      return 2;
     }
     if (det == "Green") {
       Serial.println("                              exit bonus");
@@ -550,7 +552,7 @@ bool trydetcol(){
       ResetSensors();
       
     }
-    return false;
+    return 0;
 }
 
 void resetSignal() {
@@ -586,16 +588,19 @@ void dashTick(int front) {
   moveForward(dashSpeed);
 
   while (elapsed < dashStrength) {
-    trydetcol();               
+    int out = trydetcol();               
     toggleTick();
     delay(100);                 
-    elapsed += 100;             
+    elapsed += 100;        
+    if (out == 2){
+      return;     
+    }
   }
 
   motorsOff();
   delay(50);
-  moveBackward(dashSpeed);
-  delay(dashStrength);      
+  moveBackward(dashSpeedBack);
+  delay(dashStrengthBack);      
   motorsOff();
   delay(50);
   lastExecutedDash = millis();
