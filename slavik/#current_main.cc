@@ -69,7 +69,6 @@ int rightWallDistanceGoal = 7;
 float globalSpeed = 1;
 int fieldSize = 30;
 float timeperangle = 6;
-float speedAdj = 0.2;
 int rightturncancel = 13;
 const float Frightturn = 0.1;
 const float Fleftturnspeed = 1;
@@ -95,12 +94,12 @@ float lastFront = 0;
 float frontmax = 5;
 bool tickState = false;
 int dashStrength = 700;
-int dashStrengthBack = 1300;
+int dashStrengthBack = 1200;
 int dashFrequency = 1200;
 float dashSpeed = 0.7;
-float dashSpeedBack = 0.4;
+float dashSpeedBack = 0.5;
 long lastExecutedDash = 0;  // Time when dashTick was last executed
-int minfrontdistdash = 20;
+int minfrontdistdash = 23;
 
 // Debug flags
 bool debug = false;
@@ -176,7 +175,20 @@ void setup() {  //SETUP
 
 
   dropoff.attach(servopin);  
-  dropoff.write(90);        
+
+  dropoff.write(180);
+  delay(400);
+  toggleTick();
+  delay(400);
+  toggleTick();
+  delay(400);
+  toggleTick();
+  delay(400);
+  toggleTick();
+  delay(400);
+  toggleTick();
+  delay(400);
+  dropoff.write(90);       
 
   digitalWrite(pinLED, LOW);
 
@@ -541,7 +553,7 @@ int trydetcol(){
       delay(400);
       turnLeft(1);
       toggleTick();
-      delay(700);
+      delay(600);
       toggleTick();
       motorsOff();
       resetSignal();
@@ -603,12 +615,31 @@ void dashTick(int front) {
     if (out == 2){
       return;     
     }
+    if (out == 1){
+      moveForward(dashSpeed);
+    }
   }
 
   motorsOff();
   delay(50);
   moveBackward(dashSpeedBack);
-  delay(dashStrengthBack);      
+
+  elapsed = 0;
+  
+  while (elapsed < dashStrengthBack) {
+    int out = trydetcol();               
+    toggleTick();
+    delay(100);                 
+    elapsed += 100;        
+    if (out == 2){
+      return;     
+    }
+    if (out == 1){
+      moveBackward(dashSpeedBack);
+    }
+  }
+
+     
   motorsOff();
   delay(50);
   lastExecutedDash = millis();
@@ -628,16 +659,40 @@ void fieldDetect() {  //DROPOFF SYSTEM (#DO)
   setColor('X');
 
   dropoff.write(0);
-  delay(250);
+  delay(300);
   toggleTick();
-  delay(250);
+  delay(300);
+  toggleTick();
+  delay(300);
+  toggleTick();
+  delay(300);
+  toggleTick();
+  delay(300);
+  toggleTick();
+  delay(300);
+  toggleTick();
+  delay(300);
   dropoff.write(90);
   toggleTick();
   delay(50);
   dropoff.write(180);
-  delay(250);
+  delay(300);
   toggleTick();
-  delay(250);
+  delay(300);
+  toggleTick();
+  delay(300);
+  toggleTick();
+  delay(300);
+  toggleTick();
+  delay(300);
+  toggleTick();
+  delay(300);
+  toggleTick();
+  delay(300);
+  toggleTick();
+  delay(300);
+  toggleTick();
+  delay(300);
   dropoff.write(90);
   toggleTick();
 }
