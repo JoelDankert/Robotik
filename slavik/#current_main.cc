@@ -55,7 +55,7 @@ const int Boffset = -1;
 #define GREEN_PIN 52
 #define BLUE_PIN 53
 
-#define nanoFULLRESETpin 54
+#define nanoFULLRESETpin 34
 
 // Reset function
 void (*resetFunc)(void) = 0;
