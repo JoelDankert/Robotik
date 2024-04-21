@@ -55,6 +55,8 @@ const int Boffset = -1;
 #define GREEN_PIN 52
 #define BLUE_PIN 53
 
+#define nanoFULLRESETpin 54
+
 // Reset function
 void (*resetFunc)(void) = 0;
 
@@ -71,11 +73,11 @@ int fieldSize = 30;
 float timeperangle = 6;
 int rightturncancel = 13;
 const float Frightturn = 0.1;
-const float Fleftturnspeed = 1;
+const float Fleftturnspeed = 0.8;
 
 // Color detection variables
-long lastred = -1000;
-long reddelay = 2000;
+long lastred = -3000;
+long reddelay = 4000;
 bool hasclearedred = true;
 bool hasclearedgreen = false;
 
@@ -167,11 +169,16 @@ void setup() {  //SETUP
   pinMode(blackPin, INPUT);
   pinMode(greenPin, INPUT);
   pinMode(resetPin, OUTPUT);
+  pinMode(nanoFULLRESETpin, OUTPUT);
   digitalWrite(resetPin, HIGH);
 
   pinMode(tickPin, OUTPUT);
 
-
+  digitalWrite(nanoFULLRESETpin, HIGH);
+  delay(100);
+  digitalWrite(nanoFULLRESETpin, LOW);
+  delay(100);
+  digitalWrite(nanoFULLRESETpin, HIGH);
 
 
 
