@@ -74,8 +74,8 @@ const float Frightturn = 0.1;
 const float Fleftturnspeed = 1;
 
 // Color detection variables
-int lastred = 0;
-int reddelay = 4000;
+long lastred = -1000;
+long reddelay = 2000;
 bool hasclearedred = true;
 bool hasclearedgreen = false;
 
@@ -93,8 +93,8 @@ int fatalerrorreset = 100;
 float lastFront = 0;
 float frontmax = 5;
 bool tickState = false;
-int dashStrength = 600;
-int dashStrengthBack = 1000;
+int dashStrength = 500;
+int dashStrengthBack = 1100;
 int dashFrequency = 1200;
 float dashSpeed = 0.7;
 float dashSpeedBack = 0.5;
@@ -502,9 +502,20 @@ String detectColor() {  //COLOR DETECTION (#CD)
   bool greenSignal = digitalRead(greenPin) == HIGH;
 
 
-  if(millis() > lastred+reddelay){
+  Serial.println("                                                 ");
+  Serial.print(redSignal);
+  Serial.print(" ");
+  Serial.print(lastred);
+  Serial.print(" ");
+  Serial.print(reddelay);
+  Serial.print(" ");
+  Serial.print(millis());
+  Serial.print(" ");
+  Serial.print(hasclearedred);
+
+  if(millis() > (lastred+reddelay)){
       if(!hasclearedred){
-        Serial.println("                              red RESETTED");
+        Serial.println("                              red RESETTED               !!!!!!");
         hasclearedred = true;
         resetSignal();
         return "none";
