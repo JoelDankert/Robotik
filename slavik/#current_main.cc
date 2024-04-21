@@ -55,7 +55,6 @@ const int Boffset = -1;
 #define GREEN_PIN 52
 #define BLUE_PIN 53
 
-#define nanoFULLRESETpin 34
 
 // Reset function
 void (*resetFunc)(void) = 0;
@@ -169,16 +168,9 @@ void setup() {  //SETUP
   pinMode(blackPin, INPUT);
   pinMode(greenPin, INPUT);
   pinMode(resetPin, OUTPUT);
-  pinMode(nanoFULLRESETpin, OUTPUT);
   digitalWrite(resetPin, HIGH);
 
   pinMode(tickPin, OUTPUT);
-
-  digitalWrite(nanoFULLRESETpin, HIGH);
-  delay(100);
-  digitalWrite(nanoFULLRESETpin, LOW);
-  delay(100);
-  digitalWrite(nanoFULLRESETpin, HIGH);
 
 
 
