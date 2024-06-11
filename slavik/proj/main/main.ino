@@ -60,11 +60,11 @@ const int Boffset = -1;
 void (*resetFunc)(void) = 0;
 
 // Distance thresholds
-int rightWallDistanceMax = 16;
+int rightWallDistanceMax = 17;
 int frontWallDistanceGoal = 12;
 int frontWallDistanceMin = 8;
-int tryWallDistanceGoal = 20;
-int rightWallDistanceGoal = 9;
+int tryWallDistanceGoal = 23;
+int rightWallDistanceGoal = 18;
 
 // Speed and time constants
 float globalSpeed = 1;
@@ -106,7 +106,7 @@ int minfrontdistdash = 23;
 // Debug flags
 bool debug = false;
 bool nocolor = false;
-bool nodash = false;
+bool nodash = true;
 bool noblack = false;
 
 // Blink variables
