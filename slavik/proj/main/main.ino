@@ -268,14 +268,9 @@ void MAIN() {
 
 
     int spd = 1;  //LEFT TURNS (#LT)
-    Serial.println("sensor grab");
     int front = getSensor("FF");
-    Serial.println("F check");
     float rightF = getSensor("RF");
-    Serial.println("RF check");
     float rightB = getSensor("RB");
-    Serial.println("RB check");
-    Serial.println("sensor grab finished");
 
     if (errordetecttick(front)) {  //ERRORDETECTTICK (#EDT)
       Serial.println("err det");
@@ -288,7 +283,6 @@ void MAIN() {
     int i = 0;
     if( front < frontWallDistanceMin){
       Serial.println("                              left turn: ");
-      Serial.println(">");
       bool skip = false;
       lastFront = front;
       while (front < frontWallDistanceGoal && i < 20) {
@@ -301,7 +295,7 @@ void MAIN() {
           state = 3;
           setColor('B');
         }
-        Serial.print(".");
+        Serial.print("<");
         trydetcol();
         if (front > lastFront + frontmax && lastFront < 30) {  //Suboptimal Left Turn Quantification Compensator
           Serial.print("!C!");
@@ -340,9 +334,6 @@ void MAIN() {
     }
     
 
-
-
-
     //RIGHT TURNS (#RT)
 
     if (rightF > rightWallDistanceMax) {
@@ -368,8 +359,6 @@ void MAIN() {
     }
 
     //Exponential Wall-Alignment Righting Mechanism EWARM (#WC)
-
-
     float distadj = (rightF - rightWallDistanceGoal) * 1;
 
     float diff = rightF - rightB + distadj;
@@ -399,8 +388,6 @@ void MAIN() {
     if (state != -1) {
       continue;
     }
-
-
 
 
 
@@ -500,18 +487,6 @@ String detectColor() {  //COLOR DETECTION (#CD)
   bool blackSignal = digitalRead(blackPin) == HIGH;
   bool greenSignal = digitalRead(greenPin) == HIGH;
 
-
-  Serial.println("                                                 ");
-  Serial.print(redSignal);
-  Serial.print(" ");
-  Serial.print(lastred);
-  Serial.print(" ");
-  Serial.print(reddelay);
-  Serial.print(" ");
-  Serial.print(millis());
-  Serial.print(" ");
-  Serial.print(hasclearedred);
-
   if(millis() > (lastred+reddelay)){
       if(!hasclearedred){
         Serial.println("                              red RESETTED               !!!!!!");
@@ -602,7 +577,7 @@ void toggleTick(){
 
 void dashTick(int front) {
 
-  Serial.println("dashtick > ");
+  Serial.println("!/\!");
   Serial.print(millis()-lastExecutedDash);
   if (millis() - lastExecutedDash < dashFrequency) {
     return;  
@@ -657,7 +632,6 @@ void dashTick(int front) {
   lastExecutedDash = millis();
 
 }
-
 
 
 void fieldDetect() {  //DROPOFF SYSTEM (#DO)

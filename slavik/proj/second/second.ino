@@ -25,6 +25,7 @@ bool firstTickDetected = true; // Flag to check if the first tick has been detec
 
 void setup() {
   Serial.begin(9600);
+  Serial.println("st");
   startmillis = millis();
   if (tcs.begin()) {
     Serial.println("Found sensor");
