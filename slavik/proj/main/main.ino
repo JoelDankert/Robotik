@@ -60,11 +60,11 @@ const int Boffset = -1;
 void (*resetFunc)(void) = 0;
 
 // Distance thresholds
-int rightWallDistanceMax = 14;
+int rightWallDistanceMax = 16;
 int frontWallDistanceGoal = 12;
 int frontWallDistanceMin = 8;
 int tryWallDistanceGoal = 20;
-int rightWallDistanceGoal = 7;
+int rightWallDistanceGoal = 9;
 
 // Speed and time constants
 float globalSpeed = 1;
