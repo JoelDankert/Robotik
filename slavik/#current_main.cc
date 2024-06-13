@@ -23,10 +23,10 @@ const uint8_t addressF = 0x32;   // Front
 const uint8_t addressB = 0x33;   // Back
 
 // TOF Sensor offsets
-const int Foffset = -1;
-const int RBoffset = -1;
-const int RFoffset = -1;
-const int Boffset = -1;
+const int Foffset = 0;
+const int RBoffset = -2;
+const int RFoffset = -6;
+const int Boffset = 0;
 
 // Motor pins
 #define MOTOR1_DIR 4
@@ -60,19 +60,21 @@ const int Boffset = -1;
 void (*resetFunc)(void) = 0;
 
 // Distance thresholds
-int rightWallDistanceMax = 14;
-int frontWallDistanceGoal = 12;
-int frontWallDistanceMin = 8;
-int tryWallDistanceGoal = 20;
-int rightWallDistanceGoal = 7;
+int rightWallDistanceMax = 20; //init right turn
+int frontWallDistanceGoal = 12; //exit left turn
+int frontWallDistanceMin = 8; //init left turn
+int tryWallDistanceGoal = 20; //max distance to try stabilization
+int rightWallDistanceGoal = 8; //goal stabilization distance
+int rightBackDistanceMin = 25; //min distance to cancel right turn forward at start
 
 // Speed and time constants
-float globalSpeed = 1;
-int fieldSize = 30;
+float globalSpeed = 1; //in motor movement
+int fieldSize = 30; //unused, so dumb hahahaha
 float timeperangle = 6;
 int rightturncancel = 13;
 const float Frightturn = 0.1;
 const float Fleftturnspeed = 0.8;
+int oneTurnTime = 600;
 
 // Color detection variables
 long lastred = -3000;
@@ -106,8 +108,9 @@ int minfrontdistdash = 23;
 // Debug flags
 bool debug = false;
 bool nocolor = false;
-bool nodash = false;
+bool nodash = true;
 bool noblack = false;
+bool newright = true;
 
 // Blink variables
 unsigned long previousMillis = 0;  // will store last time LED was updated
@@ -225,11 +228,14 @@ void setup() {  //SETUP
 }
 
 void loop() {
-
+  //moveForward(1);
   //spin(90);
 
-  //moveBackward(0.5);
+  moveBackward(0.5);
+  delay(200);
+  motorsOff();
   //TESTSENSORS();
+  //Serial.println(getSensor("RB"));
   //Serial.print(detectColor());
   //delay(3000);
   //ResetSensors();
@@ -244,38 +250,23 @@ void loop() {
 
 void MAIN() {
   while (true) {
-
-
-    
     delay(10);
     toggleTick();
-    
     if (debug){
       TESTSENSORS();
     }
-
     if (state == 0 || state == -1) {  //RESETLED
       setColor('X');
     }
     state = -1;
-
-
-
    if (trydetcol()>0){
     continue;
    }
 
-
-
     int spd = 1;  //LEFT TURNS (#LT)
-    Serial.println("sensor grab");
     int front = getSensor("FF");
-    Serial.println("F check");
     float rightF = getSensor("RF");
-    Serial.println("RF check");
     float rightB = getSensor("RB");
-    Serial.println("RB check");
-    Serial.println("sensor grab finished");
 
     if (errordetecttick(front)) {  //ERRORDETECTTICK (#EDT)
       Serial.println("err det");
@@ -285,10 +276,44 @@ void MAIN() {
       motorsOff();
     }
 
+
+    
+    if (rightF > rightWallDistanceMax) {
+      Serial.println("                              right turn: ");
+      Serial.print(rightF);
+      
+      setColor('B');
+
+
+      if(newright)
+      {
+        newRightSequence();
+        state = 2;
+      }
+      else{
+        if(!nodash){
+          dashTick(front);                                                                                                                        
+        }
+        
+        if (state == -1) {
+          state = 2;
+        }
+        if (front < rightturncancel) {
+
+        } else {
+          moveForward(1);
+          setMotorSpeedR(Frightturn);
+        }
+      }
+      
+    }
+    if (state != -1) {
+      continue;
+    }
+
     int i = 0;
     if( front < frontWallDistanceMin){
       Serial.println("                              left turn: ");
-      Serial.println(">");
       bool skip = false;
       lastFront = front;
       while (front < frontWallDistanceGoal && i < 20) {
@@ -301,7 +326,7 @@ void MAIN() {
           state = 3;
           setColor('B');
         }
-        Serial.print(".");
+        Serial.print("<");
         trydetcol();
         if (front > lastFront + frontmax && lastFront < 30) {  //Suboptimal Left Turn Quantification Compensator
           Serial.print("!C!");
@@ -340,36 +365,10 @@ void MAIN() {
     }
     
 
-
-
-
     //RIGHT TURNS (#RT)
 
-    if (rightF > rightWallDistanceMax) {
-      Serial.println("                              right turn: ");
-      Serial.print(rightF);
-      if(!nodash){
-        dashTick(front);
-      }
-      
-      if (state == -1) {
-        state = 2;
-        setColor('B');
-      }
-      if (front < rightturncancel) {
-
-      } else {
-        moveForward(1);
-        setMotorSpeedR(Frightturn);
-      }
-    }
-    if (state != -1) {
-      continue;
-    }
 
     //Exponential Wall-Alignment Righting Mechanism EWARM (#WC)
-
-
     float distadj = (rightF - rightWallDistanceGoal) * 1;
 
     float diff = rightF - rightB + distadj;
@@ -387,8 +386,8 @@ void MAIN() {
       if (compamount < 0.3) {
         BLINKontrack();
       }
-      Serial.println("adjustment needed: ");
-      Serial.print(compamount);
+      Serial.print("adjustment needed: ");
+      Serial.println(compamount);
 
       if (diff > 0) {
         setMotorSpeedR(spdC);
@@ -402,8 +401,6 @@ void MAIN() {
 
 
 
-
-
     if (state == -1) {
       moveForward(1);
     }
@@ -411,9 +408,39 @@ void MAIN() {
 }
 
 
+void newRightSequence(){  
+  int i = 0;
+  int rightF = 0;
+  int rightB = 0;
+  while(i < 30){
+    i+=1;
+    delay(100);
+    rightF = getSensor("RF");
+    rightB = getSensor("RB");
+    moveForward(0.5);
+    trydetcol();
+    errordetecttick(getSensor("FF"));
+
+    if(rightF <= rightWallDistanceMax){
+      return;
+    }
+    if(rightB >= rightBackDistanceMin){
+
+      moveForward(1);
+      delay(100);
+      turnRight(1);
+      delay(oneTurnTime);
+
+      oneFWD();
+      return;
+
+    }
+
+  }
+  
+}
+
 bool errordetecttick(int front) {  //Progressive Stasis Error Detection PSED (#ED)
-
-
 
   float absolutechange = abs(front - EDlast);
   EDcurrentchange = (EDcurrentchange * EDchangeslow + absolutechange) / (EDchangeslow + 1);
@@ -433,6 +460,21 @@ bool errordetecttick(int front) {  //Progressive Stasis Error Detection PSED (#E
   return false;
 }
 
+void oneFWD(){
+  moveForward(1);
+  toggleTick();
+  delay(200);
+  trydetcol();
+  delay(200);
+  trydetcol();
+  delay(200);
+  trydetcol();
+  delay(100);
+  trydetcol();
+  delay(100);
+  toggleTick();
+  motorsOff();
+}
 
 void setMotorSpeed(float speed) {  //MOTORFUNCS
   int pwmValue = speed * 255 * globalSpeed;
@@ -500,18 +542,6 @@ String detectColor() {  //COLOR DETECTION (#CD)
   bool blackSignal = digitalRead(blackPin) == HIGH;
   bool greenSignal = digitalRead(greenPin) == HIGH;
 
-
-  Serial.println("                                                 ");
-  Serial.print(redSignal);
-  Serial.print(" ");
-  Serial.print(lastred);
-  Serial.print(" ");
-  Serial.print(reddelay);
-  Serial.print(" ");
-  Serial.print(millis());
-  Serial.print(" ");
-  Serial.print(hasclearedred);
-
   if(millis() > (lastred+reddelay)){
       if(!hasclearedred){
         Serial.println("                              red RESETTED               !!!!!!");
@@ -544,7 +574,7 @@ String detectColor() {  //COLOR DETECTION (#CD)
   return "none";  // No color detected
 }
 
-int trydetcol(){
+int trydetcol(){ //Color with action
    String det = "none";
     if (!nocolor){
       det = detectColor();
@@ -564,10 +594,17 @@ int trydetcol(){
       delay(400);
       turnLeft(1);
       toggleTick();
-      delay(600);
+      delay(oneTurnTime);
       toggleTick();
-      motorsOff();
       resetSignal();
+      if(getSensor("FF") < 8){
+        turnLeft(1);
+        delay(oneTurnTime);
+        motorsOff();
+      }
+      else{
+        oneFWD();
+      }
       return 2;
     }
     if (det == "Green") {
@@ -593,16 +630,16 @@ void resetSignal() {
   digitalWrite(resetPin, HIGH);  
   delay(100);
 }
+
 void toggleTick(){
   tickState = !tickState; 
   digitalWrite(tickPin, tickState); 
 
 }
 
-
 void dashTick(int front) {
 
-  Serial.println("dashtick > ");
+  Serial.println("!/\!");
   Serial.print(millis()-lastExecutedDash);
   if (millis() - lastExecutedDash < dashFrequency) {
     return;  
@@ -657,8 +694,6 @@ void dashTick(int front) {
   lastExecutedDash = millis();
 
 }
-
-
 
 void fieldDetect() {  //DROPOFF SYSTEM (#DO)
   motorsOff();
@@ -787,8 +822,6 @@ void BLINKontrack() {
     previousMillis = currentMillis;  // Remember the time it switched on
   }
 }
-
-
 
 float getSensor(String sensorID) {  //TOFS
   fatalerrorcount -= 1;
