@@ -417,11 +417,12 @@ void newRightSequence(){
     delay(100);
     rightF = getSensor("RF");
     rightB = getSensor("RB");
-    moveForward(0.5);
     trydetcol();
+    moveForward(1);
+    toggleTick();
     errordetecttick(getSensor("FF"));
 
-    if(rightF <= rightWallDistanceMax){
+    if(rightF < rightWallDistanceMax){
       return;
     }
     if(rightB >= rightBackDistanceMin){
@@ -437,6 +438,9 @@ void newRightSequence(){
     }
 
   }
+  turnLeft(1);
+  delay(oneTurnTime);
+  motorsOff();
   
 }
 
